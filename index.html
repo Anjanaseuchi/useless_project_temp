@@ -4,27 +4,70 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Charger Guilt</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <main class="container">
+
     <h1>🔌 Charger Guilt</h1>
-    <p id="tagline">Put it down. Let it charge. It'll only take a minute.</p>
 
-    <button id="startBtn">I just plugged in</button>
+    <p id="tagline">
+      Checking your battery...
+    </p>
 
+    <!-- Battery information -->
+    <p id="batteryState">
+      🔋 Checking battery...
+    </p>
+
+    <!-- Shown ONLY when battery is below 100% -->
+    <button id="startBtn" class="hidden">
+      🔌 I Just Plugged In
+    </button>
+
+    <!-- Shown ONLY when battery is exactly 100% -->
+    <button id="fullBtn" class="hidden">
+      🎉 Fully Charged
+    </button>
+
+    <!-- Charging session -->
     <div id="statusPanel" class="hidden">
-      <p>Charging... <span id="battery-emoji">🔋</span></p>
-      <p>Times you've been caught: <span id="count">0</span></p>
-      <button id="endBtn" class="secondary">Fully charged — stop</button>
+
+      <p>
+        Charging...
+        <span id="battery-emoji">🔋</span>
+      </p>
+
+      <p>
+        Battery:
+        <strong id="batteryPercent">--%</strong>
+      </p>
+
+      <p>
+        Times you've been caught:
+        <span id="count">0</span>
+      </p>
+
+      <p id="useStatus">
+        💤 Phone is resting...
+      </p>
+
     </div>
 
+    <!-- Celebration -->
     <div id="celebration" class="hidden">
-      <p id="celebrateText">🎉 Fully charged! Good job leaving it alone (eventually).</p>
+      <p id="celebrateText">
+        🎉 Fully charged! Good job leaving it alone.
+      </p>
     </div>
 
     <p id="historyText"></p>
+
   </main>
 
   <script src="script.js"></script>

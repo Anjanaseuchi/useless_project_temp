@@ -1,24 +1,10 @@
 // ==========================================
-// CHARGER GUILT - Battery Aware Version
+// CHARGER GUILT
 // ==========================================
 
-// ---------- State ----------
-let isCharging = false;
-let lastInteraction = 0;
-let lastPlayed = 0;
-let offenseCount = 0;
-let currentAudio = null;
-let lastFilePlayed = null;
-let battery = null;
-
-
-// ==========================================
-// AUDIO GROUPS
-// ==========================================
+// ---------- AUDIO FILES ----------
 
 const audioGroups = {
-
-  // 10% - 20%
   veryLow: [
     "audio/10-20 low charge.mp3",
     "audio/10-20(scream dialog).mp3",
@@ -26,485 +12,807 @@ const audioGroups = {
     "audio/scream (10-20).mp3"
   ],
 
-  // 20% - 30%
   low: [
     "audio/20-30(yooo).mp3",
     "audio/dialog what the hell (20-30%).mp3",
     "audio/fahh(20-30).mp3"
   ],
 
-  // 30% - 50%
   below50: [
     "audio/40-60.mp3",
     "audio/scolding.mp3",
     "audio/scream(50%).mp3"
   ],
 
-  // 50% - 70%
   medium: [
     "audio/50-70.mp3",
     "audio/sad-meow-(40-60).mp3",
     "audio/scolding.mp3"
   ],
 
-  // 70% - 99%
   high: [
     "audio/few minutes(70-100).mp3",
     "audio/ultimate warning.mp3"
-  ],
-
-  // 100%
-  full: [
-    "audio/100%.mp3",
-    "audio/100% 2nd audio.mp3",
-    "audio/fully charged.mp3"
   ]
 };
 
-
-// ==========================================
-// SPECIAL CHAOS SOUNDS
-// ==========================================
-
-const chaosSounds = [
-  "audio/low battery irritating funny sleep.mp3",
-  "audio/spiderman-meme-song.mp3",
-  "audio/i-love-you_1.mp3",
-  "audio/scream 2.mp3"
-];
+// Happy sound when battery reaches 100%
+const fullyChargedAudio = "audio/fully charged.mp3";
 
 
-// ==========================================
-// HTML ELEMENTS
-// ==========================================
+// ---------- HTML ELEMENTS ----------
 
 const startBtn = document.getElementById("startBtn");
-const endBtn = document.getElementById("endBtn");
+const fullBtn = document.getElementById("fullBtn");
+
 const statusPanel = document.getElementById("statusPanel");
-const countEl = document.getElementById("count");
-const historyText = document.getElementById("historyText");
 const celebration = document.getElementById("celebration");
 
+const tagline = document.getElementById("tagline");
+const batteryState = document.getElementById("batteryState");
 
-// ==========================================
-// HISTORY
-// ==========================================
+const batteryPercent = document.getElementById("batteryPercent");
+const batteryEmoji = document.getElementById("battery-emoji");
 
-function loadHistory() {
+const countEl = document.getElementById("count");
+const useStatus = document.getElementById("useStatus");
+const historyText = document.getElementById("historyText");
 
-  const total = localStorage.getItem("totalOffenses") || 0;
 
-  historyText.innerText =
-    `All-time offenses: ${total}`;
+// ---------- VARIABLES ----------
+
+let battery = null;
+
+let chargingSessionActive = false;
+
+let currentAudio = null;
+let nextAudioTimer = null;
+
+let lastUserActivity = 0;
+
+let activityCheckTimer = null;
+
+let caughtCount = Number(
+  localStorage.getItem("chargerGuiltCaught") || 0
+);
+
+countEl.textContent = caughtCount;
+
+
+// How long we consider the phone "being used"
+// after the last touch/scroll/motion.
+const USER_ACTIVE_TIME = 3000;
+
+
+// Gap between voice clips.
+const AUDIO_GAP = 1000;
+
+
+// ---------- HELPERS ----------
+
+function hide(element) {
+  element.classList.add("hidden");
 }
 
-loadHistory();
-
-
-// ==========================================
-// BATTERY DETECTION
-// ==========================================
-
-async function getBattery() {
-
-  // Check whether browser supports Battery API
-  if (!("getBattery" in navigator)) {
-
-    console.log("Battery API is not supported on this browser.");
-
-    return;
-  }
-
-  try {
-
-    battery = await navigator.getBattery();
-
-    console.log(
-      `Battery: ${Math.round(battery.level * 100)}%`
-    );
-
-    // Watch for battery percentage changes
-    battery.addEventListener("levelchange", () => {
-
-      console.log(
-        `Battery changed to ${Math.round(battery.level * 100)}%`
-      );
-
-    });
-
-  } catch (error) {
-
-    console.log("Could not access battery:", error);
-
-  }
-}
-
-getBattery();
-
-
-// ==========================================
-// GET CURRENT BATTERY PERCENTAGE
-// ==========================================
-
-function getBatteryPercentage() {
-
-  if (!battery) {
-
-    // Temporary fallback if battery information
-    // isn't available
-    return 50;
-  }
-
-  return Math.round(battery.level * 100);
+function show(element) {
+  element.classList.remove("hidden");
 }
 
 
-// ==========================================
-// CHOOSE AUDIO GROUP
-// ==========================================
+// ---------- BATTERY GROUP ----------
 
-function getAudioGroup() {
+function getAudioGroup(level) {
 
-  const percentage = getBatteryPercentage();
+  const percent = level * 100;
 
-  if (percentage <= 20) {
-
+  if (percent <= 20) {
     return audioGroups.veryLow;
-
-  } else if (percentage <= 30) {
-
-    return audioGroups.low;
-
-  } else if (percentage < 50) {
-
-    return audioGroups.below50;
-
-  } else if (percentage < 70) {
-
-    return audioGroups.medium;
-
-  } else if (percentage < 100) {
-
-    return audioGroups.high;
-
-  } else {
-
-    return audioGroups.full;
   }
+
+  if (percent <= 30) {
+    return audioGroups.low;
+  }
+
+  if (percent < 50) {
+    return audioGroups.below50;
+  }
+
+  if (percent < 70) {
+    return audioGroups.medium;
+  }
+
+  return audioGroups.high;
 }
 
 
-// ==========================================
-// RANDOM AUDIO
-// ==========================================
+// ---------- RANDOM AUDIO ----------
 
-function getRandomAudio(list) {
+function getRandomAudio(group) {
 
-  if (!list || list.length === 0) {
+  if (!group || group.length === 0) {
     return null;
   }
 
-  // Prevent the same audio from playing twice
-  // in a row when possible
-  let available = list.filter(
-    file => file !== lastFilePlayed
-  );
-
-  if (available.length === 0) {
-    available = list;
-  }
-
-  const randomIndex =
-    Math.floor(Math.random() * available.length);
-
-  const selected = available[randomIndex];
-
-  lastFilePlayed = selected;
-
-  return selected;
+  return group[
+    Math.floor(Math.random() * group.length)
+  ];
 }
 
 
-// ==========================================
-// PLAY AUDIO
-// ==========================================
+// ---------- STOP AUDIO ----------
 
-function playSound(file) {
+function stopAudio() {
 
-  if (!file) {
-    return;
+  if (nextAudioTimer) {
+    clearTimeout(nextAudioTimer);
+    nextAudioTimer = null;
   }
-
-  // Stop previous audio
-  if (currentAudio) {
-
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-  }
-
-  currentAudio = new Audio(file);
-
-  currentAudio.volume = 1;
-
-  currentAudio.play()
-    .then(() => {
-
-      console.log("Playing:", file);
-
-    })
-    .catch(error => {
-
-      console.log("Audio couldn't play:", error);
-
-    });
-}
-
-
-// ==========================================
-// STOP AUDIO
-// ==========================================
-
-function stopSound() {
 
   if (currentAudio) {
 
     currentAudio.pause();
+
     currentAudio.currentTime = 0;
+
     currentAudio = null;
   }
 }
 
 
-// ==========================================
-// START CHARGING SESSION
-// ==========================================
-
-startBtn.addEventListener("click", async () => {
-
-  isCharging = true;
-
-  offenseCount = 0;
-  lastPlayed = 0;
-  lastFilePlayed = null;
-
-  countEl.innerText = offenseCount;
-
-  statusPanel.classList.remove("hidden");
-  celebration.classList.add("hidden");
-  startBtn.classList.add("hidden");
-
-  // Reset interaction timer.
-  // We don't want the START button itself
-  // to count as "using the phone".
-  lastInteraction = 0;
-
-  // Try to unlock audio for mobile browsers
-  const unlockFile = audioGroups.below50[0];
-
-  const unlock = new Audio(unlockFile);
-
-  unlock.volume = 0;
-
-  try {
-
-    await unlock.play();
-    unlock.pause();
-
-  } catch (error) {
-
-    console.log("Audio unlock attempt:", error);
-
-  }
-
-  console.log(
-    `Charging session started at ${getBatteryPercentage()}%`
-  );
-});
-
-
-// ==========================================
-// END CHARGING SESSION
-// ==========================================
-
-endBtn.addEventListener("click", () => {
-
-  isCharging = false;
-
-  stopSound();
-
-  statusPanel.classList.add("hidden");
-  startBtn.classList.remove("hidden");
-  celebration.classList.remove("hidden");
-
-  const celebrateSound =
-    new Audio("audio/fully charged.mp3");
-
-  celebrateSound.play().catch(() => {});
-
-  const total =
-    parseInt(
-      localStorage.getItem("totalOffenses") || 0
-    );
-
-  localStorage.setItem(
-    "totalOffenses",
-    total + offenseCount
-  );
-
-  loadHistory();
-
-  lastInteraction = 0;
-});
-
-
-// ==========================================
-// DETECT PHONE USAGE
-// ==========================================
-
-function registerInteraction(event) {
-
-  if (!isCharging) {
-    return;
-  }
-
-  // Don't count the "Fully charged" button
-  // as phone usage
-  if (event.target === endBtn) {
-    return;
-  }
-
-  lastInteraction = Date.now();
-}
-
-
-// Desktop + mobile interaction
-[
-  "pointerdown",
-  "touchstart",
-  "click",
-  "scroll"
-].forEach(eventName => {
-
-  window.addEventListener(
-    eventName,
-    registerInteraction,
-    { passive: true }
-  );
-
-});
-
-
-// ==========================================
-// CHECK IF USER IS STILL USING PHONE
-// ==========================================
+// ---------- IS USER USING PHONE? ----------
 
 function isUserUsingPhone() {
 
-  if (!isCharging) {
-    return false;
-  }
-
-  const timeSinceInteraction =
-    Date.now() - lastInteraction;
-
-  // Consider the phone "in use" if there
-  // was interaction within the last 3 seconds
-  return timeSinceInteraction < 3000;
+  return (
+    Date.now() - lastUserActivity <= USER_ACTIVE_TIME
+  );
 }
 
 
-// ==========================================
-// DECIDE WHEN TO SCOLD
-// ==========================================
+// ---------- PLAY NEXT SCOLDING ----------
 
-function maybeScold() {
+function playNextScolding() {
 
-  if (!isCharging) {
+  // Session must still be active.
+  if (!chargingSessionActive) {
     return;
   }
 
-  // User isn't currently interacting
+  // Don't play if user stopped using phone.
   if (!isUserUsingPhone()) {
 
-    // They probably put the phone down
-    stopSound();
+    useStatus.textContent =
+      "💤 Phone is resting...";
 
     return;
   }
 
-  const now = Date.now();
+  // Need battery information.
+  if (!battery) {
+    return;
+  }
 
-  // Don't play another sound while the current
-  // sound is still playing
+  // Battery became full.
+  if (battery.level >= 1) {
+    handleFullyCharged();
+    return;
+  }
+
+
+  const group = getAudioGroup(battery.level);
+
+  const sound = getRandomAudio(group);
+
+  if (!sound) {
+    return;
+  }
+
+
+  currentAudio = new Audio(sound);
+
+  currentAudio.volume = 1.0;
+
+
+  currentAudio.addEventListener("ended", () => {
+
+    currentAudio = null;
+
+    // Wait roughly one second before another sound.
+    if (
+      chargingSessionActive &&
+      isUserUsingPhone()
+    ) {
+
+      nextAudioTimer = setTimeout(() => {
+
+        nextAudioTimer = null;
+
+        playNextScolding();
+
+      }, AUDIO_GAP);
+
+    }
+
+  });
+
+
+  currentAudio.addEventListener("error", () => {
+
+    console.error(
+      "Could not play audio:",
+      sound
+    );
+
+    currentAudio = null;
+  });
+
+
+  currentAudio.play()
+    .catch(error => {
+
+      console.log(
+        "Audio playback was blocked:",
+        error
+      );
+
+    });
+}
+
+
+// ---------- START SCOLDING ----------
+
+function startScolding() {
+
+  if (!chargingSessionActive) {
+    return;
+  }
+
+  if (!isUserUsingPhone()) {
+    return;
+  }
+
+  // Already playing.
   if (currentAudio && !currentAudio.paused) {
     return;
   }
 
-  // Different cooldown depending on offense count
-  let cooldown = 6000;
-
-  if (offenseCount >= 3) {
-    cooldown = 4500;
+  // Already waiting for next sound.
+  if (nextAudioTimer) {
+    return;
   }
 
-  if (offenseCount >= 6) {
-    cooldown = 3500;
-  }
+  caughtCount++;
 
-  if (offenseCount >= 10) {
-    cooldown = 2500;
-  }
+  countEl.textContent = caughtCount;
 
-  // Not enough time since previous sound
-  if (now - lastPlayed < cooldown) {
+  localStorage.setItem(
+    "chargerGuiltCaught",
+    caughtCount
+  );
+
+  useStatus.textContent =
+    "😡 CAUGHT! Put the phone down!";
+
+  playNextScolding();
+}
+
+
+// ---------- USER ACTIVITY ----------
+
+function registerUserActivity(event) {
+
+  // Don't count the initial "Just Plugged In"
+  // button click as phone usage.
+  if (
+    event &&
+    (
+      event.target === startBtn ||
+      event.target === fullBtn
+    )
+  ) {
     return;
   }
 
 
-  // ========================================
-  // CHOOSE BATTERY-APPROPRIATE AUDIO
-  // ========================================
-
-  const group = getAudioGroup();
-
-  let selectedAudio = getRandomAudio(group);
-
-
-  // ========================================
-  // AFTER MANY OFFENSES, ADD CHAOS
-  // ========================================
-
-  if (offenseCount >= 5) {
-
-    // 30% chance of a weird/chaotic sound
-    if (Math.random() < 0.3) {
-
-      selectedAudio =
-        getRandomAudio(chaosSounds);
-    }
+  if (!chargingSessionActive) {
+    return;
   }
 
 
-  // ========================================
-  // PLAY IT
-  // ========================================
+  lastUserActivity = Date.now();
 
-  playSound(selectedAudio);
+  useStatus.textContent =
+    "📱 You're using the phone...";
 
-  lastPlayed = now;
 
-  offenseCount++;
-
-  countEl.innerText = offenseCount;
-
-  console.log(
-    `Offense #${offenseCount} | Battery: ${getBatteryPercentage()}%`
-  );
+  // Start audio only AFTER the user actually
+  // interacts with the phone.
+  startScolding();
 }
 
 
-// ==========================================
-// CHECK EVERY SECOND
-// ==========================================
+// ---------- TOUCH ----------
 
-setInterval(maybeScold, 1000);
+window.addEventListener(
+  "touchstart",
+  registerUserActivity,
+  { passive: true }
+);
+
+window.addEventListener(
+  "touchmove",
+  registerUserActivity,
+  { passive: true }
+);
+
+
+// ---------- CLICK ----------
+
+window.addEventListener(
+  "click",
+  registerUserActivity
+);
+
+
+// ---------- SCROLL ----------
+
+window.addEventListener(
+  "scroll",
+  registerUserActivity,
+  { passive: true }
+);
+
+
+// ---------- KEYBOARD ----------
+
+window.addEventListener(
+  "keydown",
+  registerUserActivity
+);
+
+
+// ---------- POINTER ----------
+
+window.addEventListener(
+  "pointerdown",
+  registerUserActivity
+);
+
+
+// ---------- MOTION DETECTION ----------
+
+function handleMotion(event) {
+
+  if (!chargingSessionActive) {
+    return;
+  }
+
+
+  const acceleration =
+    event.accelerationIncludingGravity;
+
+  if (!acceleration) {
+    return;
+  }
+
+
+  const x = acceleration.x || 0;
+  const y = acceleration.y || 0;
+  const z = acceleration.z || 0;
+
+
+  const movement =
+    Math.sqrt(
+      x * x +
+      y * y +
+      z * z
+    );
+
+
+  // Around 1g means the phone is simply stationary.
+  // Larger changes suggest movement/picking up.
+  if (Math.abs(movement - 9.8) > 1.5) {
+
+    lastUserActivity = Date.now();
+
+    useStatus.textContent =
+      "📱 You picked it up! 😡";
+
+    startScolding();
+  }
+}
+
+
+// ---------- ENABLE MOTION ----------
+
+async function enableMotionDetection() {
+
+  if (
+    typeof DeviceMotionEvent === "undefined"
+  ) {
+    return;
+  }
+
+
+  // iPhone/iPad may require permission.
+  if (
+    typeof DeviceMotionEvent.requestPermission ===
+    "function"
+  ) {
+
+    try {
+
+      const permission =
+        await DeviceMotionEvent.requestPermission();
+
+      if (permission === "granted") {
+
+        window.addEventListener(
+          "devicemotion",
+          handleMotion
+        );
+
+      }
+
+    } catch (error) {
+
+      console.log(
+        "Motion permission unavailable:",
+        error
+      );
+
+    }
+
+  } else {
+
+    window.addEventListener(
+      "devicemotion",
+      handleMotion
+    );
+  }
+}
+
+
+// ---------- CHECK USER ACTIVITY ----------
+
+function checkUserActivity() {
+
+  if (!chargingSessionActive) {
+    return;
+  }
+
+
+  if (!isUserUsingPhone()) {
+
+    useStatus.textContent =
+      "💤 Phone is resting...";
+
+    // Stop currently playing audio.
+    if (currentAudio) {
+      stopAudio();
+    }
+  }
+}
+
+
+activityCheckTimer = setInterval(
+  checkUserActivity,
+  500
+);
+
+
+// ---------- START CHARGING SESSION ----------
+
+startBtn.addEventListener(
+  "click",
+  async () => {
+
+    // Safety check.
+    if (battery && battery.level >= 1) {
+
+      handleFullyCharged();
+
+      return;
+    }
+
+
+    chargingSessionActive = true;
+
+    lastUserActivity = 0;
+
+
+    hide(startBtn);
+
+    show(statusPanel);
+
+    hide(celebration);
+
+
+    tagline.textContent =
+      "🔌 Charging started. Leave the phone alone...";
+
+
+    useStatus.textContent =
+      "💤 Phone is resting...";
+
+
+    // IMPORTANT:
+    // No audio here.
+    // Audio only starts when user uses phone.
+
+
+    // Ask for motion permission after user click.
+    await enableMotionDetection();
+  }
+);
+
+
+// ---------- FULLY CHARGED BUTTON ----------
+
+fullBtn.addEventListener(
+  "click",
+  () => {
+
+    // VERY IMPORTANT SAFETY CHECK.
+    // Even if someone somehow clicks the button,
+    // we verify the real battery level first.
+
+    if (!battery || battery.level < 1) {
+
+      hide(fullBtn);
+
+      show(startBtn);
+
+      batteryState.textContent =
+        "🔋 Battery is not full yet.";
+
+      return;
+    }
+
+
+    chargingSessionActive = false;
+
+    stopAudio();
+
+
+    hide(fullBtn);
+
+    hide(statusPanel);
+
+    show(celebration);
+
+
+    tagline.textContent =
+      "You survived the charging session. 🎉";
+
+
+    batteryState.textContent =
+      "🔋 Battery: 100%";
+
+
+    playFullyChargedSound();
+  }
+);
+
+
+// ---------- FULLY CHARGED AUDIO ----------
+
+function playFullyChargedSound() {
+
+  const audio =
+    new Audio(fullyChargedAudio);
+
+  audio.volume = 1.0;
+
+  audio.play()
+    .catch(error => {
+
+      console.error(
+        "Fully charged audio could not play:",
+        error
+      );
+
+      historyText.textContent =
+        "⚠️ Couldn't play the celebration audio. Check the audio filename/path.";
+    });
+}
+
+
+// ---------- BATTERY BECAME FULL ----------
+
+function handleFullyCharged() {
+
+  chargingSessionActive = false;
+
+  stopAudio();
+
+
+  hide(startBtn);
+
+  hide(statusPanel);
+
+  show(fullBtn);
+
+
+  batteryState.textContent =
+    "🔋 Battery: 100% — Fully Charged!";
+
+  tagline.textContent =
+    "🎉 Your phone made it to 100%.";
+
+
+  useStatus.textContent =
+    "🎉 You may celebrate now.";
+
+
+  celebration.classList.add("hidden");
+}
+
+
+// ---------- UPDATE BATTERY UI ----------
+
+function updateBatteryUI() {
+
+  if (!battery) {
+    return;
+  }
+
+
+  const percent =
+    Math.round(battery.level * 100);
+
+
+  batteryPercent.textContent =
+    `${percent}%`;
+
+
+  batteryState.textContent =
+    `🔋 Battery: ${percent}%`;
+
+
+  // Full battery
+  if (battery.level >= 1) {
+
+    handleFullyCharged();
+
+    return;
+  }
+
+
+  // Battery below 100%
+  hide(fullBtn);
+
+
+  // Only show Start button if
+  // no charging session is active.
+  if (!chargingSessionActive) {
+
+    show(startBtn);
+
+    tagline.textContent =
+      "Put it down. Let it charge. It'll only take a minute.";
+
+    batteryState.textContent =
+      `🔋 Battery: ${percent}% — Not full yet`;
+  }
+}
+
+
+// ---------- BATTERY LEVEL CHANGED ----------
+
+function handleBatteryLevelChange() {
+
+  updateBatteryUI();
+}
+
+
+// ---------- BATTERY CHARGING CHANGED ----------
+
+function handleChargingChange() {
+
+  if (!battery) {
+    return;
+  }
+
+
+  const percent =
+    Math.round(battery.level * 100);
+
+
+  if (battery.charging) {
+
+    batteryState.textContent =
+      `⚡ Charging — ${percent}%`;
+
+  } else {
+
+    batteryState.textContent =
+      `🔋 ${percent}% — Not currently charging`;
+  }
+
+
+  updateBatteryUI();
+}
+
+
+// ---------- INITIALIZE BATTERY ----------
+
+async function initializeBattery() {
+
+  // Battery Status API not supported.
+  if (
+    !("getBattery" in navigator)
+  ) {
+
+    console.log(
+      "Battery Status API is not supported."
+    );
+
+
+    // Safe fallback:
+    // Never pretend that the battery is 100%.
+    hide(fullBtn);
+
+    show(startBtn);
+
+    batteryState.textContent =
+      "🔋 Battery status unavailable";
+
+    tagline.textContent =
+      "Plug in your phone and leave it alone.";
+
+    historyText.textContent =
+      "Battery detection isn't supported by this browser. Using charging-session mode.";
+
+    return;
+  }
+
+
+  try {
+
+    battery =
+      await navigator.getBattery();
+
+
+    // Initial check.
+    updateBatteryUI();
+
+
+    // Listen for battery percentage changes.
+    battery.addEventListener(
+      "levelchange",
+      handleBatteryLevelChange
+    );
+
+
+    // Listen for charger plugged/unplugged.
+    battery.addEventListener(
+      "chargingchange",
+      handleChargingChange
+    );
+
+
+    handleChargingChange();
+
+  } catch (error) {
+
+    console.error(
+      "Battery initialization failed:",
+      error
+    );
+
+
+    // Safe fallback.
+    hide(fullBtn);
+
+    show(startBtn);
+
+    batteryState.textContent =
+      "🔋 Battery detection unavailable";
+  }
+}
+
+
+// ---------- START APP ----------
+
+initializeBattery();

@@ -1,54 +1,276 @@
-body {
-  text-align: center;
-  padding-top: 8vh;
+/* ==========================================
+   CHARGER GUILT - STYLE
+   ========================================== */
+
+:root {
+  --card-radius: 20px;
 }
 
-h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.2rem;
+
+/* ---------- PAGE ---------- */
+
+body {
+  min-height: 100vh;
+  text-align: center;
+
+  padding-top: 8vh;
+  padding-bottom: 5vh;
+
+  background:
+    radial-gradient(
+      circle at top,
+      #fff7ed 0%,
+      #f8fafc 45%,
+      #eef2ff 100%
+    );
 }
+
+
+/* ---------- MAIN CONTAINER ---------- */
+
+main.container {
+  max-width: 650px;
+}
+
+
+/* ---------- TITLE ---------- */
+
+h1 {
+  font-size: clamp(2.2rem, 8vw, 3.5rem);
+
+  margin-bottom: 0.4rem;
+
+  letter-spacing: -1px;
+}
+
+
+/* ---------- TAGLINE ---------- */
 
 #tagline {
   opacity: 0.7;
-  margin-bottom: 2rem;
+
+  font-size: 1.05rem;
+
+  margin-bottom: 1.5rem;
 }
 
-#startBtn, #endBtn {
-  font-size: 1.2rem;
+
+/* ---------- BATTERY STATE ---------- */
+
+#batteryState {
+  display: inline-block;
+
+  padding: 0.6rem 1rem;
+
+  margin-bottom: 1.5rem;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.8);
+
+  font-weight: 600;
+
+  box-shadow:
+    0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+
+/* ---------- BUTTONS ---------- */
+
+#startBtn,
+#fullBtn {
+  font-size: 1.15rem;
+
   padding: 1rem 2rem;
+
+  border-radius: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-.hidden {
-  display: none;
+
+#startBtn:hover,
+#fullBtn:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-#count {
-  font-weight: bold;
-  font-size: 1.5rem;
-  color: #d9480f;
+
+#startBtn:active,
+#fullBtn:active {
+  transform: scale(0.97);
 }
+
+
+/* ---------- STATUS PANEL ---------- */
+
+#statusPanel {
+  margin-top: 2rem;
+
+  padding: 1.5rem;
+
+  border-radius: var(--card-radius);
+
+  background: rgba(255, 255, 255, 0.8);
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.08);
+
+  backdrop-filter: blur(10px);
+}
+
+
+/* ---------- BATTERY EMOJI ---------- */
 
 #battery-emoji {
   display: inline-block;
+
   animation: pulse 1.2s infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+
+/* ---------- BATTERY PERCENT ---------- */
+
+#batteryPercent {
+  font-size: 1.3rem;
 }
+
+
+/* ---------- CAUGHT COUNT ---------- */
+
+#count {
+  font-weight: bold;
+
+  font-size: 1.5rem;
+
+  color: #d9480f;
+}
+
+
+/* ---------- PHONE USE STATUS ---------- */
+
+#useStatus {
+  margin-top: 1.2rem;
+
+  padding: 0.8rem;
+
+  border-radius: 12px;
+
+  background: rgba(0, 0, 0, 0.04);
+
+  font-weight: 600;
+}
+
+
+/* ---------- CELEBRATION ---------- */
 
 #celebration {
   margin-top: 1.5rem;
-  padding: 1rem;
-  border-radius: 8px;
+
+  padding: 1.2rem;
+
+  border-radius: var(--card-radius);
+
   background: #ebfbee;
+
   color: #2b8a3e;
+
   font-weight: bold;
+
+  box-shadow:
+    0 8px 25px rgba(43, 138, 62, 0.12);
 }
+
+
+/* ---------- HISTORY ---------- */
 
 #historyText {
   margin-top: 3rem;
+
   opacity: 0.6;
+
   font-size: 0.9rem;
+}
+
+
+/* ---------- HIDDEN ---------- */
+
+.hidden {
+  display: none !important;
+}
+
+
+/* ---------- BATTERY PULSE ---------- */
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+
+/* ---------- FULLY CHARGED ANIMATION ---------- */
+
+#fullBtn:not(.hidden) {
+  animation: chargedPulse 1.5s infinite;
+}
+
+
+@keyframes chargedPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 600px) {
+
+  body {
+    padding-top: 5vh;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+  }
+
+  #tagline {
+    font-size: 0.95rem;
+  }
+
+  #startBtn,
+  #fullBtn {
+    width: 100%;
+
+    font-size: 1.05rem;
+
+    padding: 1rem;
+  }
+
+  #statusPanel {
+    margin-top: 1.5rem;
+
+    padding: 1.2rem;
+  }
 }
