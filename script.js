@@ -1,152 +1,634 @@
 // ==========================================
 // CHARGER GUILT
+// FINAL SCRIPT
 // ==========================================
 
-// ---------- AUDIO FILES ----------
 
-const audioGroups = {
-  veryLow: [
-    "audio/10-20 low charge.mp3",
-    "audio/10-20(scream dialog).mp3",
-    "audio/10-20(low dialog).mp3",
-    "audio/scream (10-20).mp3"
-  ],
+// ==========================================
+// AUDIO FILES
+// ==========================================
 
-  low: [
-    "audio/20-30(yooo).mp3",
-    "audio/dialog what the hell (20-30%).mp3",
-    "audio/fahh(20-30).mp3"
-  ],
+// Range-specific audio.
+// If a filename contains a charging range,
+// it belongs ONLY to that range.
 
-  below50: [
-    "audio/40-60.mp3",
-    "audio/scolding.mp3",
-    "audio/scream(50%).mp3"
-  ],
+const rangeAudios = [
+  {
+    min: 10,
+    max: 20,
 
-  medium: [
-    "audio/50-70.mp3",
-    "audio/sad-meow-(40-60).mp3",
-    "audio/scolding.mp3"
-  ],
+    files: [
+      "audio/10-20 low charge.mp3",
+      "audio/10-20(low dialog).mp3",
+      "audio/10-20(scream dialog).mp3",
+      "audio/scream (10-20).mp3"
+    ]
+  },
 
-  high: [
-    "audio/few minutes(70-100).mp3",
-    "audio/ultimate warning.mp3"
-  ]
-};
+  {
+    min: 20,
+    max: 30,
 
-// Happy sound when battery reaches 100%
-const fullyChargedAudio = "audio/fully charged.mp3";
+    files: [
+      "audio/20-30(yooo).mp3",
+      "audio/dialog what the hell (20-30%).mp3",
+      "audio/fahh(20-30).mp3"
+    ]
+  },
 
+  {
+    min: 40,
+    max: 60,
 
-// ---------- HTML ELEMENTS ----------
+    files: [
+      "audio/40-60.mp3",
+      "audio/sad-meow-(40-60).mp3"
+    ]
+  },
 
-const startBtn = document.getElementById("startBtn");
-const fullBtn = document.getElementById("fullBtn");
+  {
+    min: 50,
+    max: 70,
 
-const statusPanel = document.getElementById("statusPanel");
-const celebration = document.getElementById("celebration");
+    files: [
+      "audio/50-70.mp3"
+    ]
+  },
 
-const tagline = document.getElementById("tagline");
-const batteryState = document.getElementById("batteryState");
+  {
+    min: 70,
+    max: 100,
 
-const batteryPercent = document.getElementById("batteryPercent");
-const batteryEmoji = document.getElementById("battery-emoji");
-
-const countEl = document.getElementById("count");
-const useStatus = document.getElementById("useStatus");
-const historyText = document.getElementById("historyText");
-
-
-// ---------- VARIABLES ----------
-
-let battery = null;
-
-let chargingSessionActive = false;
-
-let currentAudio = null;
-let nextAudioTimer = null;
-
-let lastUserActivity = 0;
-
-let activityCheckTimer = null;
-
-let caughtCount = Number(
-  localStorage.getItem("chargerGuiltCaught") || 0
-);
-
-countEl.textContent = caughtCount;
+    files: [
+      "audio/few minutes(70-100).mp3"
+    ]
+  }
+];
 
 
-// How long we consider the phone "being used"
-// after the last touch/scroll/motion.
+// ==========================================
+// COMMON AUDIO
+// ==========================================
+
+// These files have NO charging range
+// in their filename.
+//
+// Therefore they are COMMON.
+
+const commonAudios = [
+  "audio/scolding.mp3",
+  "audio/ultimate warning.mp3",
+  "audio/scream 2.mp3",
+  "audio/low battery irritating funny sleep.mp3",
+  "audio/spiderman-meme-song.mp3",
+  "audio/i-love-you_1.mp3"
+];
+
+
+// ==========================================
+// FULLY CHARGED AUDIO
+// ==========================================
+
+const fullyChargedAudio =
+  "audio/fully charged.mp3";
+
+
+// ==========================================
+// SETTINGS
+// ==========================================
+
 const USER_ACTIVE_TIME = 3000;
 
-
-// Gap between voice clips.
 const AUDIO_GAP = 1000;
 
 
-// ---------- HELPERS ----------
+// ==========================================
+// HTML ELEMENTS
+// ==========================================
 
-function hide(element) {
-  element.classList.add("hidden");
-}
+const startBtn =
+  document.getElementById("startBtn");
 
-function show(element) {
-  element.classList.remove("hidden");
-}
+const fullBtn =
+  document.getElementById("fullBtn");
 
+const batteryState =
+  document.getElementById("batteryState");
 
-// ---------- BATTERY GROUP ----------
+const batteryPercent =
+  document.getElementById("batteryPercent");
 
-function getAudioGroup(level) {
+const statusPanel =
+  document.getElementById("statusPanel");
 
-  const percent = level * 100;
+const celebration =
+  document.getElementById("celebration");
 
-  if (percent <= 20) {
-    return audioGroups.veryLow;
-  }
+const useStatus =
+  document.getElementById("useStatus");
 
-  if (percent <= 30) {
-    return audioGroups.low;
-  }
-
-  if (percent < 50) {
-    return audioGroups.below50;
-  }
-
-  if (percent < 70) {
-    return audioGroups.medium;
-  }
-
-  return audioGroups.high;
-}
+const countElement =
+  document.getElementById("count");
 
 
-// ---------- RANDOM AUDIO ----------
+// ==========================================
+// ANIMAL ELEMENTS
+// ==========================================
 
-function getRandomAudio(group) {
+const animalBox =
+  document.getElementById("animalBox");
 
-  if (!group || group.length === 0) {
+const animalFace =
+  document.getElementById("animalFace");
+
+const animalMessage =
+  document.getElementById("animalMessage");
+
+
+// ==========================================
+// VARIABLES
+// ==========================================
+
+let battery = null;
+
+let chargingSession = false;
+
+let userIsActive = false;
+
+let activeTimer = null;
+
+let audioTimer = null;
+
+let currentAudio = null;
+
+
+// Ordered audio sequence
+
+let sequence = [];
+
+let sequenceIndex = 0;
+
+
+// Animal escalation stage
+
+let animalStage = 0;
+
+
+// ==========================================
+// CAUGHT COUNT
+// ==========================================
+
+let caughtCount =
+  Number(
+    localStorage.getItem(
+      "chargerGuiltCaught"
+    )
+  ) || 0;
+
+countElement.textContent =
+  caughtCount;
+
+
+// ==========================================
+// GET BATTERY PERCENT
+// ==========================================
+
+function getBatteryPercent() {
+
+  if (!battery) {
     return null;
   }
 
-  return group[
-    Math.floor(Math.random() * group.length)
-  ];
+  return Math.round(
+    battery.level * 100
+  );
 }
 
 
-// ---------- STOP AUDIO ----------
+// ==========================================
+// FIND RANGE AUDIO
+// ==========================================
+
+function getRangeAudio(percent) {
+
+  const matchingRanges =
+    rangeAudios.filter(range => {
+
+      return (
+        percent >= range.min &&
+        percent <= range.max
+      );
+
+    });
+
+
+  if (matchingRanges.length === 0) {
+    return [];
+  }
+
+
+  // If ranges overlap, choose the range
+  // with the highest starting percentage.
+  //
+  // Example:
+  //
+  // 55% matches:
+  // 40-60
+  // 50-70
+  //
+  // 50-70 wins.
+
+  matchingRanges.sort(
+    (a, b) => b.min - a.min
+  );
+
+
+  return matchingRanges[0].files;
+}
+
+
+// ==========================================
+// BUILD ORDERED AUDIO SEQUENCE
+// ==========================================
+
+function buildSequence() {
+
+  const percent =
+    getBatteryPercent();
+
+
+  if (percent === null) {
+
+    sequence = [
+      ...commonAudios
+    ];
+
+    sequenceIndex = 0;
+
+    return;
+  }
+
+
+  const specificAudio =
+    getRangeAudio(percent);
+
+
+  // Specific range voices FIRST.
+  //
+  // Common voices AFTER them.
+
+  sequence = [
+    ...specificAudio,
+    ...commonAudios
+  ];
+
+
+  sequenceIndex = 0;
+}
+
+
+// ==========================================
+// GET NEXT AUDIO
+// ==========================================
+
+function getNextAudio() {
+
+  if (sequence.length === 0) {
+    return null;
+  }
+
+
+  const audioFile =
+    sequence[sequenceIndex];
+
+
+  sequenceIndex++;
+
+
+  // Once we reach the end,
+  // start again from the beginning.
+
+  if (
+    sequenceIndex >=
+    sequence.length
+  ) {
+
+    sequenceIndex = 0;
+
+  }
+
+
+  return audioFile;
+}
+
+
+// ==========================================
+// ANIMAL EXPRESSIONS
+// ==========================================
+
+function updateAnimal(stage) {
+
+  if (!animalBox) {
+    return;
+  }
+
+
+  animalBox.classList.remove(
+    "suspicious",
+    "annoyed",
+    "angry",
+    "screaming"
+  );
+
+
+  // ----------------------------------------
+  // RESTING
+  // ----------------------------------------
+
+  if (stage === "resting") {
+
+    animalFace.textContent =
+      "🐱";
+
+    animalMessage.textContent =
+      "Aww... you're letting me rest. 🥺";
+
+    animalStage = 0;
+
+  }
+
+
+  // ----------------------------------------
+  // FIRST WARNING
+  // ----------------------------------------
+
+  else if (stage === "first") {
+
+    animalFace.textContent =
+      "🐰";
+
+    animalMessage.textContent =
+      "Umm... why are you touching the phone? 👀";
+
+    animalBox.classList.add(
+      "suspicious"
+    );
+
+    animalStage = 1;
+
+  }
+
+
+  // ----------------------------------------
+  // SECOND WARNING
+  // ----------------------------------------
+
+  else if (stage === "second") {
+
+    animalFace.textContent =
+      "🐹";
+
+    animalMessage.textContent =
+      "Hey! I saw that scroll. 😐";
+
+    animalBox.classList.add(
+      "annoyed"
+    );
+
+    animalStage = 2;
+
+  }
+
+
+  // ----------------------------------------
+  // THIRD WARNING
+  // ----------------------------------------
+
+  else if (stage === "third") {
+
+    animalFace.textContent =
+      "🐼";
+
+    animalMessage.textContent =
+      "BRO. PUT THE PHONE DOWN. 😾";
+
+    animalBox.classList.add(
+      "angry"
+    );
+
+    animalStage = 3;
+
+  }
+
+
+  // ----------------------------------------
+  // MAXIMUM ANGER
+  // ----------------------------------------
+
+  else if (stage === "scream") {
+
+    animalFace.textContent =
+      "🐸";
+
+    animalMessage.textContent =
+      "AAAAAAAA!! CHARGE YOUR PHONE!! 🤬";
+
+    animalBox.classList.add(
+      "screaming"
+    );
+
+    animalStage = 4;
+
+  }
+
+}
+
+
+// ==========================================
+// ANIMAL BLINKING
+// ==========================================
+
+function animalBlink() {
+
+  if (!animalBox) {
+    return;
+  }
+
+
+  animalBox.classList.add(
+    "blink"
+  );
+
+
+  setTimeout(() => {
+
+    animalBox.classList.remove(
+      "blink"
+    );
+
+  }, 150);
+
+}
+
+
+// Blink every few seconds.
+
+setInterval(() => {
+
+  animalBlink();
+
+}, 3000);
+
+
+// ==========================================
+// PLAY NEXT AUDIO
+// ==========================================
+
+function playNextAudio() {
+
+  if (!chargingSession) {
+    return;
+  }
+
+
+  if (!userIsActive) {
+    return;
+  }
+
+
+  const nextFile =
+    getNextAudio();
+
+
+  if (!nextFile) {
+    return;
+  }
+
+
+  // ----------------------------------------
+  // ANIMAL ESCALATION
+  // ----------------------------------------
+
+  const stage =
+    sequenceIndex;
+
+
+  if (animalStage === 0) {
+
+    updateAnimal("first");
+
+  }
+
+  else if (animalStage === 1) {
+
+    updateAnimal("second");
+
+  }
+
+  else if (animalStage === 2) {
+
+    updateAnimal("third");
+
+  }
+
+  else {
+
+    updateAnimal("scream");
+
+  }
+
+
+  // ----------------------------------------
+  // STOP PREVIOUS AUDIO
+  // ----------------------------------------
+
+  if (currentAudio) {
+
+    currentAudio.pause();
+
+    currentAudio.currentTime = 0;
+
+  }
+
+
+  // ----------------------------------------
+  // CREATE AUDIO
+  // ----------------------------------------
+
+  currentAudio =
+    new Audio(nextFile);
+
+
+  currentAudio.volume =
+    1.0;
+
+
+  // ----------------------------------------
+  // PLAY
+  // ----------------------------------------
+
+  currentAudio
+    .play()
+    .catch(error => {
+
+      console.log(
+        "Audio playback blocked:",
+        error
+      );
+
+    });
+
+
+  // ----------------------------------------
+  // AFTER AUDIO FINISHES
+  // ----------------------------------------
+
+  currentAudio.onended = () => {
+
+    if (
+      !chargingSession ||
+      !userIsActive
+    ) {
+
+      return;
+
+    }
+
+
+    clearTimeout(
+      audioTimer
+    );
+
+
+    audioTimer =
+      setTimeout(() => {
+
+        if (
+          chargingSession &&
+          userIsActive
+        ) {
+
+          playNextAudio();
+
+        }
+
+      }, AUDIO_GAP);
+
+  };
+
+}
+
+
+// ==========================================
+// STOP AUDIO
+// ==========================================
 
 function stopAudio() {
 
-  if (nextAudioTimer) {
-    clearTimeout(nextAudioTimer);
-    nextAudioTimer = null;
-  }
+  clearTimeout(
+    audioTimer
+  );
+
 
   if (currentAudio) {
 
@@ -155,381 +637,199 @@ function stopAudio() {
     currentAudio.currentTime = 0;
 
     currentAudio = null;
+
   }
+
 }
 
 
-// ---------- IS USER USING PHONE? ----------
+// ==========================================
+// USER STARTED USING PHONE
+// ==========================================
 
-function isUserUsingPhone() {
+function userStartedUsingPhone() {
 
-  return (
-    Date.now() - lastUserActivity <= USER_ACTIVE_TIME
-  );
-}
-
-
-// ---------- PLAY NEXT SCOLDING ----------
-
-function playNextScolding() {
-
-  // Session must still be active.
-  if (!chargingSessionActive) {
+  if (!chargingSession) {
     return;
   }
 
-  // Don't play if user stopped using phone.
-  if (!isUserUsingPhone()) {
+
+  // ----------------------------------------
+  // FIRST INTERACTION
+  // ----------------------------------------
+
+  if (!userIsActive) {
+
+    userIsActive = true;
+
 
     useStatus.textContent =
-      "💤 Phone is resting...";
-
-    return;
-  }
-
-  // Need battery information.
-  if (!battery) {
-    return;
-  }
-
-  // Battery became full.
-  if (battery.level >= 1) {
-    handleFullyCharged();
-    return;
-  }
+      "😈 CAUGHT! Stop using your phone!";
 
 
-  const group = getAudioGroup(battery.level);
-
-  const sound = getRandomAudio(group);
-
-  if (!sound) {
-    return;
-  }
+    caughtCount++;
 
 
-  currentAudio = new Audio(sound);
-
-  currentAudio.volume = 1.0;
-
-
-  currentAudio.addEventListener("ended", () => {
-
-    currentAudio = null;
-
-    // Wait roughly one second before another sound.
-    if (
-      chargingSessionActive &&
-      isUserUsingPhone()
-    ) {
-
-      nextAudioTimer = setTimeout(() => {
-
-        nextAudioTimer = null;
-
-        playNextScolding();
-
-      }, AUDIO_GAP);
-
-    }
-
-  });
-
-
-  currentAudio.addEventListener("error", () => {
-
-    console.error(
-      "Could not play audio:",
-      sound
+    localStorage.setItem(
+      "chargerGuiltCaught",
+      caughtCount
     );
 
-    currentAudio = null;
-  });
+
+    countElement.textContent =
+      caughtCount;
 
 
-  currentAudio.play()
-    .catch(error => {
+    // Start with the first expression.
 
-      console.log(
-        "Audio playback was blocked:",
-        error
-      );
-
-    });
-}
+    updateAnimal(
+      "first"
+    );
 
 
-// ---------- START SCOLDING ----------
+    // Start the first audio.
 
-function startScolding() {
+    playNextAudio();
 
-  if (!chargingSessionActive) {
-    return;
   }
 
-  if (!isUserUsingPhone()) {
-    return;
-  }
 
-  // Already playing.
-  if (currentAudio && !currentAudio.paused) {
-    return;
-  }
+  // ----------------------------------------
+  // KEEP USER ACTIVE
+  // ----------------------------------------
 
-  // Already waiting for next sound.
-  if (nextAudioTimer) {
-    return;
-  }
-
-  caughtCount++;
-
-  countEl.textContent = caughtCount;
-
-  localStorage.setItem(
-    "chargerGuiltCaught",
-    caughtCount
+  clearTimeout(
+    activeTimer
   );
 
-  useStatus.textContent =
-    "😡 CAUGHT! Put the phone down!";
 
-  playNextScolding();
+  activeTimer =
+    setTimeout(() => {
+
+      userStoppedUsingPhone();
+
+    }, USER_ACTIVE_TIME);
+
 }
 
 
-// ---------- USER ACTIVITY ----------
+// ==========================================
+// USER STOPPED USING PHONE
+// ==========================================
 
-function registerUserActivity(event) {
+function userStoppedUsingPhone() {
 
-  // Don't count the initial "Just Plugged In"
-  // button click as phone usage.
-  if (
-    event &&
-    (
-      event.target === startBtn ||
-      event.target === fullBtn
-    )
-  ) {
-    return;
-  }
+  userIsActive = false;
 
 
-  if (!chargingSessionActive) {
-    return;
-  }
+  clearTimeout(
+    activeTimer
+  );
 
 
-  lastUserActivity = Date.now();
+  stopAudio();
+
 
   useStatus.textContent =
-    "📱 You're using the phone...";
+    "💤 Phone is resting...";
 
 
-  // Start audio only AFTER the user actually
-  // interacts with the phone.
-  startScolding();
+  // Animal becomes cute again.
+
+  updateAnimal(
+    "resting"
+  );
+
 }
 
 
-// ---------- TOUCH ----------
+// ==========================================
+// USER ACTIVITY EVENTS
+// ==========================================
 
-window.addEventListener(
+[
   "touchstart",
-  registerUserActivity,
-  { passive: true }
-);
-
-window.addEventListener(
   "touchmove",
-  registerUserActivity,
-  { passive: true }
-);
-
-
-// ---------- CLICK ----------
-
-window.addEventListener(
-  "click",
-  registerUserActivity
-);
-
-
-// ---------- SCROLL ----------
-
-window.addEventListener(
-  "scroll",
-  registerUserActivity,
-  { passive: true }
-);
-
-
-// ---------- KEYBOARD ----------
-
-window.addEventListener(
-  "keydown",
-  registerUserActivity
-);
-
-
-// ---------- POINTER ----------
-
-window.addEventListener(
   "pointerdown",
-  registerUserActivity
-);
+  "click",
+  "scroll",
+  "keydown"
+].forEach(eventName => {
 
-
-// ---------- MOTION DETECTION ----------
-
-function handleMotion(event) {
-
-  if (!chargingSessionActive) {
-    return;
-  }
-
-
-  const acceleration =
-    event.accelerationIncludingGravity;
-
-  if (!acceleration) {
-    return;
-  }
-
-
-  const x = acceleration.x || 0;
-  const y = acceleration.y || 0;
-  const z = acceleration.z || 0;
-
-
-  const movement =
-    Math.sqrt(
-      x * x +
-      y * y +
-      z * z
-    );
-
-
-  // Around 1g means the phone is simply stationary.
-  // Larger changes suggest movement/picking up.
-  if (Math.abs(movement - 9.8) > 1.5) {
-
-    lastUserActivity = Date.now();
-
-    useStatus.textContent =
-      "📱 You picked it up! 😡";
-
-    startScolding();
-  }
-}
-
-
-// ---------- ENABLE MOTION ----------
-
-async function enableMotionDetection() {
-
-  if (
-    typeof DeviceMotionEvent === "undefined"
-  ) {
-    return;
-  }
-
-
-  // iPhone/iPad may require permission.
-  if (
-    typeof DeviceMotionEvent.requestPermission ===
-    "function"
-  ) {
-
-    try {
-
-      const permission =
-        await DeviceMotionEvent.requestPermission();
-
-      if (permission === "granted") {
-
-        window.addEventListener(
-          "devicemotion",
-          handleMotion
-        );
-
-      }
-
-    } catch (error) {
-
-      console.log(
-        "Motion permission unavailable:",
-        error
-      );
-
+  document.addEventListener(
+    eventName,
+    userStartedUsingPhone,
+    {
+      passive: true
     }
+  );
 
-  } else {
-
-    window.addEventListener(
-      "devicemotion",
-      handleMotion
-    );
-  }
-}
+});
 
 
-// ---------- CHECK USER ACTIVITY ----------
-
-function checkUserActivity() {
-
-  if (!chargingSessionActive) {
-    return;
-  }
-
-
-  if (!isUserUsingPhone()) {
-
-    useStatus.textContent =
-      "💤 Phone is resting...";
-
-    // Stop currently playing audio.
-    if (currentAudio) {
-      stopAudio();
-    }
-  }
-}
-
-
-activityCheckTimer = setInterval(
-  checkUserActivity,
-  500
-);
-
-
-// ---------- START CHARGING SESSION ----------
+// ==========================================
+// START CHARGING SESSION
+// ==========================================
 
 startBtn.addEventListener(
   "click",
-  async () => {
+  () => {
 
-    // Safety check.
-    if (battery && battery.level >= 1) {
-
-      handleFullyCharged();
-
+    if (!battery) {
       return;
     }
 
 
-    chargingSessionActive = true;
-
-    lastUserActivity = 0;
-
-
-    hide(startBtn);
-
-    show(statusPanel);
-
-    hide(celebration);
+    const percent =
+      getBatteryPercent();
 
 
-    tagline.textContent =
-      "🔌 Charging started. Leave the phone alone...";
+    // Never allow this at 100%.
+
+    if (percent >= 100) {
+
+      updateBatteryUI();
+
+      return;
+
+    }
+
+
+    chargingSession = true;
+
+    userIsActive = false;
+
+
+    // Create ordered sequence.
+
+    buildSequence();
+
+
+    // Reset animal.
+
+    updateAnimal(
+      "resting"
+    );
+
+
+    startBtn.classList.add(
+      "hidden"
+    );
+
+
+    fullBtn.classList.add(
+      "hidden"
+    );
+
+
+    statusPanel.classList.remove(
+      "hidden"
+    );
+
+
+    celebration.classList.add(
+      "hidden"
+    );
 
 
     useStatus.textContent =
@@ -537,119 +837,102 @@ startBtn.addEventListener(
 
 
     // IMPORTANT:
-    // No audio here.
-    // Audio only starts when user uses phone.
+    //
+    // No audio starts here.
+    //
+    // Audio starts only after
+    // the user interacts with
+    // the phone.
 
-
-    // Ask for motion permission after user click.
-    await enableMotionDetection();
   }
 );
 
 
-// ---------- FULLY CHARGED BUTTON ----------
+// ==========================================
+// FULLY CHARGED
+// ==========================================
 
 fullBtn.addEventListener(
   "click",
   () => {
 
-    // VERY IMPORTANT SAFETY CHECK.
-    // Even if someone somehow clicks the button,
-    // we verify the real battery level first.
-
-    if (!battery || battery.level < 1) {
-
-      hide(fullBtn);
-
-      show(startBtn);
-
-      batteryState.textContent =
-        "🔋 Battery is not full yet.";
-
+    if (!battery) {
       return;
     }
 
 
-    chargingSessionActive = false;
+    const percent =
+      getBatteryPercent();
+
+
+    // Verify actual battery level.
+
+    if (percent !== 100) {
+
+      updateBatteryUI();
+
+      return;
+
+    }
+
+
+    chargingSession = false;
+
+    userIsActive = false;
+
 
     stopAudio();
 
 
-    hide(fullBtn);
+    // Play happy audio.
 
-    hide(statusPanel);
-
-    show(celebration);
-
-
-    tagline.textContent =
-      "You survived the charging session. 🎉";
+    const audio =
+      new Audio(
+        fullyChargedAudio
+      );
 
 
-    batteryState.textContent =
-      "🔋 Battery: 100%";
+    audio.volume =
+      1.0;
 
 
-    playFullyChargedSound();
+    audio
+      .play()
+      .catch(error => {
+
+        console.log(
+          "Full charge audio blocked:",
+          error
+        );
+
+      });
+
+
+    celebration.classList.remove(
+      "hidden"
+    );
+
+
+    statusPanel.classList.add(
+      "hidden"
+    );
+
+
+    useStatus.textContent =
+      "🎉 YES! 100%!";
+
+
+    updateAnimal(
+      "resting"
+    );
+
   }
 );
 
 
-// ---------- FULLY CHARGED AUDIO ----------
-
-function playFullyChargedSound() {
-
-  const audio =
-    new Audio(fullyChargedAudio);
-
-  audio.volume = 1.0;
-
-  audio.play()
-    .catch(error => {
-
-      console.error(
-        "Fully charged audio could not play:",
-        error
-      );
-
-      historyText.textContent =
-        "⚠️ Couldn't play the celebration audio. Check the audio filename/path.";
-    });
-}
-
-
-// ---------- BATTERY BECAME FULL ----------
-
-function handleFullyCharged() {
-
-  chargingSessionActive = false;
-
-  stopAudio();
-
-
-  hide(startBtn);
-
-  hide(statusPanel);
-
-  show(fullBtn);
-
-
-  batteryState.textContent =
-    "🔋 Battery: 100% — Fully Charged!";
-
-  tagline.textContent =
-    "🎉 Your phone made it to 100%.";
-
-
-  useStatus.textContent =
-    "🎉 You may celebrate now.";
-
-
-  celebration.classList.add("hidden");
-}
-
-
-// ---------- UPDATE BATTERY UI ----------
+// ==========================================
+// UPDATE BATTERY UI
+// ==========================================
 
 function updateBatteryUI() {
 
@@ -659,112 +942,133 @@ function updateBatteryUI() {
 
 
   const percent =
-    Math.round(battery.level * 100);
-
-
-  batteryPercent.textContent =
-    `${percent}%`;
+    getBatteryPercent();
 
 
   batteryState.textContent =
     `🔋 Battery: ${percent}%`;
 
 
-  // Full battery
-  if (battery.level >= 1) {
+  batteryPercent.textContent =
+    `${percent}%`;
 
-    handleFullyCharged();
+
+  // ========================================
+  // FULLY CHARGED
+  // ========================================
+
+  if (percent >= 100) {
+
+    chargingSession = false;
+
+    userIsActive = false;
+
+
+    stopAudio();
+
+
+    statusPanel.classList.add(
+      "hidden"
+    );
+
+
+    startBtn.classList.add(
+      "hidden"
+    );
+
+
+    fullBtn.classList.remove(
+      "hidden"
+    );
+
+
+    celebration.classList.add(
+      "hidden"
+    );
+
+
+    updateAnimal(
+      "resting"
+    );
+
 
     return;
   }
 
 
-  // Battery below 100%
-  hide(fullBtn);
+  // ========================================
+  // BELOW 100%
+  // ========================================
+
+  fullBtn.classList.add(
+    "hidden"
+  );
 
 
-  // Only show Start button if
-  // no charging session is active.
-  if (!chargingSessionActive) {
-
-    show(startBtn);
-
-    tagline.textContent =
-      "Put it down. Let it charge. It'll only take a minute.";
-
-    batteryState.textContent =
-      `🔋 Battery: ${percent}% — Not full yet`;
-  }
-}
+  celebration.classList.add(
+    "hidden"
+  );
 
 
-// ---------- BATTERY LEVEL CHANGED ----------
+  if (!chargingSession) {
 
-function handleBatteryLevelChange() {
+    startBtn.classList.remove(
+      "hidden"
+    );
 
-  updateBatteryUI();
-}
-
-
-// ---------- BATTERY CHARGING CHANGED ----------
-
-function handleChargingChange() {
-
-  if (!battery) {
-    return;
   }
 
 
-  const percent =
-    Math.round(battery.level * 100);
+  // ----------------------------------------
+  // BATTERY RANGE CHANGED
+  // ----------------------------------------
+
+  if (chargingSession) {
+
+    const wasActive =
+      userIsActive;
 
 
-  if (battery.charging) {
+    buildSequence();
 
-    batteryState.textContent =
-      `⚡ Charging — ${percent}%`;
 
-  } else {
+    if (wasActive) {
 
-    batteryState.textContent =
-      `🔋 ${percent}% — Not currently charging`;
+      stopAudio();
+
+
+      playNextAudio();
+
+    }
+
   }
 
-
-  updateBatteryUI();
 }
 
 
-// ---------- INITIALIZE BATTERY ----------
+// ==========================================
+// BATTERY INITIALIZATION
+// ==========================================
 
-async function initializeBattery() {
+async function initBattery() {
 
-  // Battery Status API not supported.
+  // Browser doesn't support Battery API.
+
   if (
     !("getBattery" in navigator)
   ) {
 
-    console.log(
-      "Battery Status API is not supported."
-    );
-
-
-    // Safe fallback:
-    // Never pretend that the battery is 100%.
-    hide(fullBtn);
-
-    show(startBtn);
-
     batteryState.textContent =
       "🔋 Battery status unavailable";
 
-    tagline.textContent =
-      "Plug in your phone and leave it alone.";
 
-    historyText.textContent =
-      "Battery detection isn't supported by this browser. Using charging-session mode.";
+    startBtn.classList.remove(
+      "hidden"
+    );
+
 
     return;
+
   }
 
 
@@ -774,45 +1078,60 @@ async function initializeBattery() {
       await navigator.getBattery();
 
 
-    // Initial check.
+    // Initial UI.
+
     updateBatteryUI();
 
 
-    // Listen for battery percentage changes.
+    // Battery percentage changed.
+
     battery.addEventListener(
       "levelchange",
-      handleBatteryLevelChange
+      updateBatteryUI
     );
 
 
-    // Listen for charger plugged/unplugged.
+    // Charger plugged/unplugged.
+
     battery.addEventListener(
       "chargingchange",
-      handleChargingChange
+      updateBatteryUI
     );
 
+  }
 
-    handleChargingChange();
+  catch (error) {
 
-  } catch (error) {
-
-    console.error(
-      "Battery initialization failed:",
+    console.log(
+      "Battery API error:",
       error
     );
 
 
-    // Safe fallback.
-    hide(fullBtn);
-
-    show(startBtn);
-
     batteryState.textContent =
-      "🔋 Battery detection unavailable";
+      "🔋 Battery status unavailable";
+
+
+    startBtn.classList.remove(
+      "hidden"
+    );
+
   }
+
 }
 
 
-// ---------- START APP ----------
+// ==========================================
+// INITIAL ANIMAL STATE
+// ==========================================
 
-initializeBattery();
+updateAnimal(
+  "resting"
+);
+
+
+// ==========================================
+// START APP
+// ==========================================
+
+initBattery();

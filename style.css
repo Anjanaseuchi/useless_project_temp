@@ -1,232 +1,863 @@
 /* ==========================================
-   CHARGER GUILT - STYLE
+   CHARGER GUILT
+   DARK + CUTE STYLE
+   ========================================== */
+
+
+/* ==========================================
+   VARIABLES
    ========================================== */
 
 :root {
-  --card-radius: 20px;
+
+  --card-radius: 24px;
+
 }
 
 
-/* ---------- PAGE ---------- */
+/* ==========================================
+   PAGE
+   ========================================== */
 
 body {
+
   min-height: 100vh;
-  text-align: center;
+
+  margin: 0;
 
   padding-top: 8vh;
   padding-bottom: 5vh;
 
+  text-align: center;
+
+  color: #f8fafc;
+
   background:
+
     radial-gradient(
-      circle at top,
-      #fff7ed 0%,
-      #f8fafc 45%,
-      #eef2ff 100%
+      circle at 50% 0%,
+      #312e81 0%,
+      #17153b 35%,
+      #09090f 75%,
+      #050507 100%
     );
+
 }
 
 
-/* ---------- MAIN CONTAINER ---------- */
+/* ==========================================
+   MAIN CONTAINER
+   ========================================== */
 
 main.container {
+
   max-width: 650px;
+
+  margin: auto;
+
+  padding-left: 1rem;
+  padding-right: 1rem;
+
 }
 
 
-/* ---------- TITLE ---------- */
+/* ==========================================
+   TITLE
+   ========================================== */
 
 h1 {
-  font-size: clamp(2.2rem, 8vw, 3.5rem);
 
   margin-bottom: 0.4rem;
 
-  letter-spacing: -1px;
+  font-size:
+    clamp(
+      2.4rem,
+      9vw,
+      4rem
+    );
+
+  font-weight: 900;
+
+  letter-spacing: -1.5px;
+
+  color: #ffffff;
+
+  text-shadow:
+
+    0 0 20px
+    rgba(255, 255, 255, 0.12);
+
 }
 
 
-/* ---------- TAGLINE ---------- */
+/* ==========================================
+   TAGLINE
+   ========================================== */
 
 #tagline {
-  opacity: 0.7;
+
+  margin-bottom: 1.5rem;
+
+  color: #cbd5e1;
+
+  opacity: 0.8;
 
   font-size: 1.05rem;
 
-  margin-bottom: 1.5rem;
 }
 
 
-/* ---------- BATTERY STATE ---------- */
+/* ==========================================
+   BATTERY STATE
+   ========================================== */
 
 #batteryState {
+
   display: inline-block;
 
-  padding: 0.6rem 1rem;
-
   margin-bottom: 1.5rem;
+
+  padding:
+    0.7rem
+    1.2rem;
 
   border-radius: 999px;
 
-  background: rgba(255, 255, 255, 0.8);
+  color: #e2e8f0;
 
-  font-weight: 600;
+  background:
+    rgba(255, 255, 255, 0.08);
 
-  box-shadow:
-    0 4px 15px rgba(0, 0, 0, 0.06);
-}
-
-
-/* ---------- BUTTONS ---------- */
-
-#startBtn,
-#fullBtn {
-  font-size: 1.15rem;
-
-  padding: 1rem 2rem;
-
-  border-radius: 14px;
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.12);
 
   font-weight: 700;
 
-  cursor: pointer;
+  box-shadow:
 
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+    0 8px 25px
+    rgba(0, 0, 0, 0.25);
+
+  backdrop-filter: blur(12px);
+
 }
 
+
+/* ==========================================
+   BUTTONS
+   ========================================== */
+
+#startBtn,
+#fullBtn {
+
+  width: auto;
+
+  border: none;
+
+  border-radius: 16px;
+
+  padding:
+    1rem
+    2rem;
+
+  font-size: 1.15rem;
+
+  font-weight: 800;
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  background:
+
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #7c3aed
+    );
+
+  box-shadow:
+
+    0 10px 30px
+    rgba(99, 102, 241, 0.3);
+
+  transition:
+
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+
+}
+
+
+/* ==========================================
+   BUTTON HOVER
+   ========================================== */
 
 #startBtn:hover,
 #fullBtn:hover {
-  transform: translateY(-2px);
+
+  transform:
+    translateY(-3px);
+
+  filter:
+    brightness(1.1);
 
   box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.12);
+
+    0 15px 35px
+    rgba(99, 102, 241, 0.45);
+
 }
 
+
+/* ==========================================
+   BUTTON PRESS
+   ========================================== */
 
 #startBtn:active,
 #fullBtn:active {
-  transform: scale(0.97);
+
+  transform:
+    scale(0.96);
+
 }
 
 
-/* ---------- STATUS PANEL ---------- */
+/* ==========================================
+   FULL BUTTON
+   ========================================== */
 
-#statusPanel {
-  margin-top: 2rem;
+#fullBtn {
 
-  padding: 1.5rem;
+  background:
 
-  border-radius: var(--card-radius);
-
-  background: rgba(255, 255, 255, 0.8);
+    linear-gradient(
+      135deg,
+      #22c55e,
+      #16a34a
+    );
 
   box-shadow:
-    0 10px 35px rgba(0, 0, 0, 0.08);
 
-  backdrop-filter: blur(10px);
+    0 10px 30px
+    rgba(34, 197, 94, 0.3);
+
 }
 
 
-/* ---------- BATTERY EMOJI ---------- */
+/* ==========================================
+   FULL BUTTON HOVER
+   ========================================== */
 
-#battery-emoji {
-  display: inline-block;
-
-  animation: pulse 1.2s infinite;
-}
-
-
-/* ---------- BATTERY PERCENT ---------- */
-
-#batteryPercent {
-  font-size: 1.3rem;
-}
-
-
-/* ---------- CAUGHT COUNT ---------- */
-
-#count {
-  font-weight: bold;
-
-  font-size: 1.5rem;
-
-  color: #d9480f;
-}
-
-
-/* ---------- PHONE USE STATUS ---------- */
-
-#useStatus {
-  margin-top: 1.2rem;
-
-  padding: 0.8rem;
-
-  border-radius: 12px;
-
-  background: rgba(0, 0, 0, 0.04);
-
-  font-weight: 600;
-}
-
-
-/* ---------- CELEBRATION ---------- */
-
-#celebration {
-  margin-top: 1.5rem;
-
-  padding: 1.2rem;
-
-  border-radius: var(--card-radius);
-
-  background: #ebfbee;
-
-  color: #2b8a3e;
-
-  font-weight: bold;
+#fullBtn:hover {
 
   box-shadow:
-    0 8px 25px rgba(43, 138, 62, 0.12);
+
+    0 15px 35px
+    rgba(34, 197, 94, 0.45);
+
 }
 
 
-/* ---------- HISTORY ---------- */
+/* ==========================================
+   CUTE ANIMAL BOX
+   ========================================== */
 
-#historyText {
-  margin-top: 3rem;
+#animalBox {
 
-  opacity: 0.6;
+  width:
+    min(
+      300px,
+      90%
+    );
 
-  font-size: 0.9rem;
+  margin:
+    1.5rem auto 0;
+
+  padding:
+    1.3rem;
+
+  border-radius:
+    var(--card-radius);
+
+  background:
+
+    rgba(
+      255,
+      255,
+      255,
+      0.07
+    );
+
+  border:
+
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.1
+    );
+
+  box-shadow:
+
+    0 12px 35px
+    rgba(0, 0, 0, 0.25);
+
+  backdrop-filter:
+    blur(15px);
+
+  transition:
+
+    transform 0.3s ease,
+    background 0.3s ease,
+    border-color 0.3s ease;
+
 }
 
 
-/* ---------- HIDDEN ---------- */
+/* ==========================================
+   ANIMAL FACE
+   ========================================== */
 
-.hidden {
-  display: none !important;
+#animalFace {
+
+  margin:
+    0.5rem 0;
+
+  font-size:
+    6rem;
+
+  line-height: 1;
+
+  user-select: none;
+
+  animation:
+
+    animalFloat
+    2.5s
+    ease-in-out
+    infinite;
+
+  transition:
+
+    transform 0.25s ease;
+
 }
 
 
-/* ---------- BATTERY PULSE ---------- */
+/* ==========================================
+   ANIMAL MESSAGE
+   ========================================== */
 
-@keyframes pulse {
+#animalMessage {
+
+  margin:
+    0.8rem 0 0;
+
+  color:
+    #cbd5e1;
+
+  font-size:
+    0.95rem;
+
+  font-weight:
+    700;
+
+}
+
+
+/* ==========================================
+   ANIMAL BLINK
+   ========================================== */
+
+#animalBox.blink #animalFace {
+
+  transform:
+    scaleY(0.82);
+
+}
+
+
+/* ==========================================
+   SUSPICIOUS
+   ========================================== */
+
+#animalBox.suspicious {
+
+  background:
+
+    rgba(
+      250,
+      204,
+      21,
+      0.08
+    );
+
+}
+
+
+#animalBox.suspicious #animalFace {
+
+  transform:
+    rotate(-5deg)
+    scale(1.05);
+
+}
+
+
+/* ==========================================
+   ANNOYED
+   ========================================== */
+
+#animalBox.annoyed {
+
+  background:
+
+    rgba(
+      249,
+      115,
+      22,
+      0.1
+    );
+
+}
+
+
+#animalBox.annoyed #animalFace {
+
+  transform:
+    rotate(4deg)
+    scale(1.08);
+
+}
+
+
+/* ==========================================
+   ANGRY
+   ========================================== */
+
+#animalBox.angry {
+
+  background:
+
+    rgba(
+      239,
+      68,
+      68,
+      0.12
+    );
+
+  border-color:
+
+    rgba(
+      239,
+      68,
+      68,
+      0.25
+    );
+
+}
+
+
+#animalBox.angry #animalFace {
+
+  transform:
+    scale(1.15);
+
+}
+
+
+/* ==========================================
+   SCREAMING
+   ========================================== */
+
+#animalBox.screaming {
+
+  background:
+
+    rgba(
+      220,
+      38,
+      38,
+      0.18
+    );
+
+  border-color:
+
+    rgba(
+      248,
+      113,
+      113,
+      0.35
+    );
+
+}
+
+
+#animalBox.screaming #animalFace {
+
+  transform:
+    scale(1.25);
+
+  animation:
+
+    angryShake
+    0.12s
+    infinite;
+
+}
+
+
+#animalBox.screaming #animalMessage {
+
+  color:
+    #fecaca;
+
+}
+
+
+/* ==========================================
+   ANIMAL FLOAT
+   ========================================== */
+
+@keyframes animalFloat {
 
   0%,
   100% {
-    transform: scale(1);
+
+    transform:
+      translateY(0);
+
   }
 
   50% {
-    transform: scale(1.2);
+
+    transform:
+      translateY(-7px);
+
   }
+
 }
 
 
-/* ---------- FULLY CHARGED ANIMATION ---------- */
+/* ==========================================
+   ANGRY SHAKE
+   ========================================== */
+
+@keyframes angryShake {
+
+  0% {
+
+    transform:
+      translateX(-3px)
+      rotate(-3deg)
+      scale(1.25);
+
+  }
+
+  50% {
+
+    transform:
+      translateX(3px)
+      rotate(3deg)
+      scale(1.25);
+
+  }
+
+  100% {
+
+    transform:
+      translateX(-3px)
+      rotate(-3deg)
+      scale(1.25);
+
+  }
+
+}
+
+
+/* ==========================================
+   STATUS PANEL
+   ========================================== */
+
+#statusPanel {
+
+  margin-top:
+    2rem;
+
+  padding:
+    1.7rem;
+
+  border-radius:
+    var(--card-radius);
+
+  background:
+
+    rgba(
+      255,
+      255,
+      255,
+      0.07
+    );
+
+  border:
+
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.1
+    );
+
+  box-shadow:
+
+    0 15px 45px
+    rgba(0, 0, 0, 0.3);
+
+  backdrop-filter:
+    blur(15px);
+
+}
+
+
+/* ==========================================
+   STATUS TITLE
+   ========================================== */
+
+.status-title {
+
+  margin-bottom:
+    1rem;
+
+  font-size:
+    1.25rem;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    2px;
+
+  color:
+    #a5b4fc;
+
+}
+
+
+/* ==========================================
+   STATUS LINES
+   ========================================== */
+
+.status-line {
+
+  color:
+    #e2e8f0;
+
+}
+
+
+/* ==========================================
+   BATTERY PERCENT
+   ========================================== */
+
+#batteryPercent {
+
+  font-size:
+    1.5rem;
+
+  color:
+    #a5b4fc;
+
+}
+
+
+/* ==========================================
+   CAUGHT COUNT
+   ========================================== */
+
+#count {
+
+  font-size:
+    1.6rem;
+
+  font-weight:
+    900;
+
+  color:
+    #fb7185;
+
+  text-shadow:
+
+    0 0 15px
+    rgba(
+      251,
+      113,
+      133,
+      0.35
+    );
+
+}
+
+
+/* ==========================================
+   PHONE USE STATUS
+   ========================================== */
+
+#useStatus {
+
+  margin-top:
+    1.4rem;
+
+  padding:
+    1rem;
+
+  border-radius:
+    14px;
+
+  color:
+    #f8fafc;
+
+  background:
+
+    rgba(
+      0,
+      0,
+      0,
+      0.25
+    );
+
+  border:
+
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.08
+    );
+
+  font-weight:
+    800;
+
+}
+
+
+/* ==========================================
+   CELEBRATION
+   ========================================== */
+
+#celebration {
+
+  margin-top:
+    1.5rem;
+
+  padding:
+    1.3rem;
+
+  border-radius:
+    var(--card-radius);
+
+  color:
+    #bbf7d0;
+
+  background:
+
+    rgba(
+      34,
+      197,
+      94,
+      0.12
+    );
+
+  border:
+
+    1px solid
+    rgba(
+      74,
+      222,
+      128,
+      0.2
+    );
+
+  font-weight:
+    800;
+
+  box-shadow:
+
+    0 10px 35px
+    rgba(
+      34,
+      197,
+      94,
+      0.12
+    );
+
+}
+
+
+/* ==========================================
+   CELEBRATION EMOJI
+   ========================================== */
+
+.celebration-emoji {
+
+  font-size:
+    2rem;
+
+  margin-bottom:
+    0.5rem;
+
+}
+
+
+/* ==========================================
+   HISTORY
+   ========================================== */
+
+#historyText {
+
+  margin-top:
+    3rem;
+
+  color:
+    #94a3b8;
+
+  opacity:
+    0.6;
+
+  font-size:
+    0.9rem;
+
+}
+
+
+/* ==========================================
+   HIDDEN
+   ========================================== */
+
+.hidden {
+
+  display:
+    none !important;
+
+}
+
+
+/* ==========================================
+   FULLY CHARGED ANIMATION
+   ========================================== */
 
 #fullBtn:not(.hidden) {
-  animation: chargedPulse 1.5s infinite;
+
+  animation:
+    chargedPulse
+    1.5s
+    infinite;
+
 }
 
 
@@ -234,43 +865,105 @@ h1 {
 
   0%,
   100% {
-    transform: scale(1);
+
+    transform:
+      scale(1);
+
   }
 
   50% {
-    transform: scale(1.04);
+
+    transform:
+      scale(1.04);
+
   }
+
 }
 
 
-/* ---------- MOBILE ---------- */
+/* ==========================================
+   MOBILE
+   ========================================== */
 
 @media (max-width: 600px) {
 
   body {
-    padding-top: 5vh;
+
+    padding-top:
+      5vh;
+
   }
+
+
+  main.container {
+
+    padding-left:
+      0.8rem;
+
+    padding-right:
+      0.8rem;
+
+  }
+
 
   h1 {
-    font-size: 2.4rem;
+
+    font-size:
+      2.5rem;
+
   }
 
+
   #tagline {
-    font-size: 0.95rem;
+
+    font-size:
+      0.95rem;
+
   }
+
 
   #startBtn,
   #fullBtn {
-    width: 100%;
 
-    font-size: 1.05rem;
+    width:
+      100%;
 
-    padding: 1rem;
+    font-size:
+      1.05rem;
+
+    padding:
+      1rem;
+
   }
+
+
+  #animalBox {
+
+    width:
+      85%;
+
+    padding:
+      1rem;
+
+  }
+
+
+  #animalFace {
+
+    font-size:
+      5rem;
+
+  }
+
 
   #statusPanel {
-    margin-top: 1.5rem;
 
-    padding: 1.2rem;
+    margin-top:
+      1.5rem;
+
+    padding:
+      1.2rem;
+
   }
+
 }

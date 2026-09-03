@@ -1,57 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>Charger Guilt</title>
 
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <!-- Pico CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+  >
 
+  <!-- Our custom CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
+
   <main class="container">
+
+    <!-- ======================================
+         TITLE
+    ======================================= -->
 
     <h1>🔌 Charger Guilt</h1>
 
     <p id="tagline">
-      Checking your battery...
+      Your phone is charging. Please leave it alone. 😭
     </p>
 
-    <!-- Battery information -->
+
+    <!-- ======================================
+         BATTERY INFORMATION
+    ======================================= -->
+
     <p id="batteryState">
       🔋 Checking battery...
     </p>
 
-    <!-- Shown ONLY when battery is below 100% -->
-    <button id="startBtn" class="hidden">
+
+    <!-- ======================================
+         CUTE ANIMAL
+    ======================================= -->
+
+    <div id="animalBox">
+
+      <div id="animalFace">
+        🐱
+      </div>
+
+      <p id="animalMessage">
+        I'm watching you... 👀
+      </p>
+
+    </div>
+
+
+    <!-- ======================================
+         START CHARGING BUTTON
+         
+         Shown only below 100%
+    ======================================= -->
+
+    <button
+      id="startBtn"
+      class="hidden"
+    >
       🔌 I Just Plugged In
     </button>
 
-    <!-- Shown ONLY when battery is exactly 100% -->
-    <button id="fullBtn" class="hidden">
+
+    <!-- ======================================
+         FULLY CHARGED BUTTON
+         
+         Shown only at 100%
+    ======================================= -->
+
+    <button
+      id="fullBtn"
+      class="hidden"
+    >
       🎉 Fully Charged
     </button>
 
-    <!-- Charging session -->
-    <div id="statusPanel" class="hidden">
 
-      <p>
-        Charging...
-        <span id="battery-emoji">🔋</span>
-      </p>
+    <!-- ======================================
+         CHARGING STATUS
+    ======================================= -->
 
-      <p>
+    <div
+      id="statusPanel"
+      class="hidden"
+    >
+
+      <div class="status-title">
+        ⚡ CHARGING
+      </div>
+
+
+      <p class="status-line">
+
         Battery:
-        <strong id="batteryPercent">--%</strong>
+
+        <strong id="batteryPercent">
+          --%
+        </strong>
+
       </p>
 
-      <p>
+
+      <p class="status-line">
+
         Times you've been caught:
-        <span id="count">0</span>
+
+        <span id="count">
+          0
+        </span>
+
       </p>
+
+
+      <!-- USER ACTIVITY -->
 
       <p id="useStatus">
         💤 Phone is resting...
@@ -59,17 +135,42 @@
 
     </div>
 
-    <!-- Celebration -->
-    <div id="celebration" class="hidden">
+
+    <!-- ======================================
+         CELEBRATION
+    ======================================= -->
+
+    <div
+      id="celebration"
+      class="hidden"
+    >
+
+      <div class="celebration-emoji">
+        🎉 🔋 🎉
+      </div>
+
       <p id="celebrateText">
-        🎉 Fully charged! Good job leaving it alone.
+        Fully charged! Good job leaving it alone. 😇
       </p>
+
     </div>
+
+
+    <!-- ======================================
+         HISTORY
+    ======================================= -->
 
     <p id="historyText"></p>
 
   </main>
 
+
+  <!-- ========================================
+       JAVASCRIPT
+  ========================================= -->
+
   <script src="script.js"></script>
+
 </body>
+
 </html>
