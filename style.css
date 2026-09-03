@@ -1,0 +1,54 @@
+body {
+  text-align: center;
+  padding-top: 8vh;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.2rem;
+}
+
+#tagline {
+  opacity: 0.7;
+  margin-bottom: 2rem;
+}
+
+#startBtn, #endBtn {
+  font-size: 1.2rem;
+  padding: 1rem 2rem;
+}
+
+.hidden {
+  display: none;
+}
+
+#count {
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: #d9480f;
+}
+
+#battery-emoji {
+  display: inline-block;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+#celebration {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #ebfbee;
+  color: #2b8a3e;
+  font-weight: bold;
+}
+
+#historyText {
+  margin-top: 3rem;
+  opacity: 0.6;
+  font-size: 0.9rem;
+}
