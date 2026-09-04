@@ -1,176 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  <title>Charger Guilt</title>
+    <title>Charger Guilt ⚡</title>
 
-  <!-- Pico CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-  >
-
-  <!-- Our custom CSS -->
-  <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
-
 
 <body>
 
-  <main class="container">
+    <main class="app">
 
-    <!-- ======================================
-         TITLE
-    ======================================= -->
+        <!-- HEADER -->
+        <header class="top-bar">
+            <div>
+                <p class="small-title">⚡ CHARGER GUILT</p>
+                <h1>Stop using your phone.</h1>
+            </div>
 
-    <h1>🔌 Charger Guilt</h1>
-
-    <p id="tagline">
-      Your phone is charging. Please leave it alone. 😭
-    </p>
-
-
-    <!-- ======================================
-         BATTERY INFORMATION
-    ======================================= -->
-
-    <p id="batteryState">
-      🔋 Checking battery...
-    </p>
+            <div class="charging-status" id="chargingStatus">
+                Checking...
+            </div>
+        </header>
 
 
-    <!-- ======================================
-         CUTE ANIMAL
-    ======================================= -->
+        <!-- BATTERY CARD -->
+        <section class="battery-card">
 
-    <div id="animalBox">
+            <div class="battery-top">
+                <span>Battery</span>
+                <strong id="batteryPercent">--%</strong>
+            </div>
 
-      <div id="animalFace">
-        🐱
-      </div>
+            <div class="battery-shell">
+                <div
+                    class="battery-fill"
+                    id="batteryFill"
+                ></div>
+            </div>
 
-      <p id="animalMessage">
-        I'm watching you... 👀
-      </p>
+            <p id="batteryMessage">
+                Checking your battery...
+            </p>
 
-    </div>
-
-
-    <!-- ======================================
-         START CHARGING BUTTON
-         
-         Shown only below 100%
-    ======================================= -->
-
-    <button
-      id="startBtn"
-      class="hidden"
-    >
-      🔌 I Just Plugged In
-    </button>
+        </section>
 
 
-    <!-- ======================================
-         FULLY CHARGED BUTTON
-         
-         Shown only at 100%
-    ======================================= -->
+        <!-- CHARACTER -->
+        <section class="character-card">
 
-    <button
-      id="fullBtn"
-      class="hidden"
-    >
-      🎉 Fully Charged
-    </button>
+            <div class="character-glow"></div>
 
+            <div
+                id="character"
+                class="character happy"
+                aria-label="Charger Guilt character"
+            >
+                😺
+            </div>
 
-    <!-- ======================================
-         CHARGING STATUS
-    ======================================= -->
+            <div
+                id="angerEffects"
+                class="anger-effects"
+            >
+                <span>💢</span>
+                <span>💥</span>
+                <span>⚡</span>
+            </div>
 
-    <div
-      id="statusPanel"
-      class="hidden"
-    >
+            <div class="speech-bubble" id="speechBubble">
+                Hehe... charging peacefully 😺
+            </div>
 
-      <div class="status-title">
-        ⚡ CHARGING
-      </div>
+            <p class="character-status" id="characterStatus">
+                Your phone is resting.
+            </p>
 
-
-      <p class="status-line">
-
-        Battery:
-
-        <strong id="batteryPercent">
-          --%
-        </strong>
-
-      </p>
+        </section>
 
 
-      <p class="status-line">
+        <!-- ACTION AREA -->
+        <section class="action-card">
 
-        Times you've been caught:
+            <!-- NOT FULL -->
+            <div id="chargingAction">
 
-        <span id="count">
-          0
-        </span>
+                <button
+                    id="plugButton"
+                    class="main-button"
+                >
+                    🔌 Just Plugged In
+                </button>
 
-      </p>
+                <p id="sessionText">
+                    Start the charging guilt session.
+                </p>
 
-
-      <!-- USER ACTIVITY -->
-
-      <p id="useStatus">
-        💤 Phone is resting...
-      </p>
-
-    </div>
-
-
-    <!-- ======================================
-         CELEBRATION
-    ======================================= -->
-
-    <div
-      id="celebration"
-      class="hidden"
-    >
-
-      <div class="celebration-emoji">
-        🎉 🔋 🎉
-      </div>
-
-      <p id="celebrateText">
-        Fully charged! Good job leaving it alone. 😇
-      </p>
-
-    </div>
+            </div>
 
 
-    <!-- ======================================
-         HISTORY
-    ======================================= -->
+            <!-- FULL -->
+            <div
+                id="fullyChargedAction"
+                class="hidden"
+            >
 
-    <p id="historyText"></p>
+                <button
+                    id="fullyChargedButton"
+                    class="main-button full-button"
+                >
+                    🥳 Fully Charged!
+                </button>
 
-  </main>
+                <p>
+                    Your phone survived. Congratulations.
+                </p>
+
+            </div>
+
+        </section>
 
 
-  <!-- ========================================
-       JAVASCRIPT
-  ========================================= -->
+        <!-- ACTIVITY -->
+        <section class="activity-card">
 
-  <script src="script.js"></script>
+            <div class="activity-row">
+                <span>Phone usage</span>
+
+                <strong id="usageStatus">
+                    Not using
+                </strong>
+            </div>
+
+            <div class="usage-bar">
+                <div
+                    id="usageFill"
+                    class="usage-fill"
+                ></div>
+            </div>
+
+            <p id="usageMessage">
+                Put the phone down and let it charge.
+            </p>
+
+        </section>
+
+
+        <!-- AUDIO STATUS -->
+        <section class="audio-card">
+
+            <div class="audio-icon">
+                🔊
+            </div>
+
+            <div>
+                <strong id="audioStatus">
+                    Silent
+                </strong>
+
+                <p id="audioName">
+                    No voice playing
+                </p>
+            </div>
+
+        </section>
+
+
+        <!-- FOOTER -->
+        <footer>
+            <p>
+                Charger Guilt • Your phone deserves peace. 😂
+            </p>
+        </footer>
+
+    </main>
+
+
+    <script src="script.js"></script>
 
 </body>
-
 </html>
