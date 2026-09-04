@@ -2,7 +2,7 @@
 
 
 
-# CHARGER GUILT 🎯
+# CHARGER GUILT 🔌
 
 
 ## Basic Details
@@ -10,30 +10,26 @@
 
 
 ### Team Members
-- Team Lead: Anjana S - LBSITW
-- Member 2: Parvathy K Manoj - LBSITW
+- Team Lead: Anjana S - LBS Institute Of Technology for Women Poojappura Thiruvananthapuram
+- Member 2: Parvathy K Manoj - LBS Institute Of Technology for Women Poojappura Thiruvananthapuram
 
 ### Project Description
-[2-3 lines about what your project does]
+Charger Guilt is a hilariously passive-aggressive web application designed to shame you into leaving your phone alone while it's plugged in. Utilizing browser APIs to track device motion and charging status, it relentlessly bombards you with funny audio clips the second you pick up your charging phone or try to use it before it reaches full battery.
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+Modern humans suffer from acute separation anxiety whenever their phone is tethered to a wall outlet. Instead of letting the poor device charge in peace, we constantly pick it up to scroll through feeds, check notifications, or stare blankly at the lock screen—thereby ruining battery health and defying all logic of patience.
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+A chaotic web-based intervention tool that weaponizes guilt and comedy. If your phone is plugged in and detects movement or usage before hitting 100%, it triggers a non-stop loop of goofy, obnoxious, or dramatic sound effects. The audio will not stop playing until you put the phone back down and let it charge in peace!
 
 ## Technical Details
-### Technologies/Components Used
+### Technologies
 For Software:
-- [Languages used]
-- [Frameworks used]
-- [Libraries used]
-- [Tools used]
+- Languages used - HTML5, CSS3, JavaScript(ES6+)
+- Frameworks used - Vanilla JavaScript
+- Libraries used - Web Audio API, Battery Status API
+- Tools used - Git, GitHub, VS Code
 
-For Hardware:
-- [List main components]
-- [List specifications]
-- [List tools required]
 
 ### Implementation
 For Software:
@@ -46,38 +42,22 @@ For Software:
 ### Project Documentation
 For Software:
 
-# Screenshots (Add at least 3)
-![Screenshot1](Add screenshot 1 here with proper name)
-*Add caption explaining what this shows*
+# Screenshots
+Dashboard Overview
+<img width="1627" height="856" alt="unnamed" src="https://github.com/user-attachments/assets/e24f858d-b74f-4852-a059-3aba878d8da0" />
+*The main application view showing the real-time battery percentage (70%), active charging status indicator, and the interactive cat mascot reacting with a cheeky warning message when the phone is picked up.*
 
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
+Active Shaming & Session State
+<img width="1577" height="836" alt="unnamed" src="https://github.com/user-attachments/assets/2ad7090a-a249-4199-94c6-2b9793044c2c" />
+*Displays the tracking interface showing the "Just Plugged In" session status, live phone usage meter screaming "PUT IT DOWN!", and the active audio player component looping comedic alert tracks.*
 
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+Peaceful State
+<img width="1352" height="837" alt="unnamed" src="https://github.com/user-attachments/assets/0ae41c16-e149-406c-9445-ba17ef19163f" />
+*The calm resting view showing the cat mascot happy and relaxed at 73% battery once the phone has been safely put down to charge in peace.*
 
 # Diagrams
 ![Workflow](Add your workflow/architecture diagram here)
 *Add caption explaining your workflow*
-
-For Hardware:
-
-# Schematic & Circuit
-![Circuit](Add your circuit diagram here)
-*Add caption explaining connections*
-
-![Schematic](Add your schematic diagram here)
-*Add caption explaining the schematic*
-
-# Build Photos
-![Components](Add photo of your components here)
-*List out all components shown*
-
-![Build](Add photos of build process here)
-*Explain the build steps*
-
-![Final](Add photo of final product here)
-*Explain the final build*
 
 ### Project Demo
 # Video
