@@ -2,17 +2,16 @@
 
 
 
-# [CHARGER GUILT] 🎯
+# CHARGER GUILT 🎯
 
 
 ## Basic Details
-### Team Name: [Brainless]
+### Team Name: Brainless
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Team Lead: Anjana S - LBSITW
+- Member 2: Parvathy K Manoj - LBSITW
 
 ### Project Description
 [2-3 lines about what your project does]
