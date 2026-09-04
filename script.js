@@ -68,6 +68,34 @@ const INACTIVITY_TIME = 5000;
 
 const AUDIO_GAP = 1000;
 
+// How often the character advances to the next anger level
+// while you stay continuously active. The steps repeat in a
+// loop instead of stopping once they reach the angriest one.
+
+const ESCALATION_STEP_TIME = 4000;
+
+const escalationSteps = [
+
+    {
+        state: "annoyed",
+        bubble: "HEY! I SAW THAT! 😾",
+        status: "Why are you using your phone?!"
+    },
+
+    {
+        state: "angry",
+        bubble: "SERIOUSLY?! PUT IT DOWN!",
+        status: "You're really testing me right now."
+    },
+
+    {
+        state: "rage",
+        bubble: "THAT'S IT! I'M FURIOUS!",
+        status: "This is now personal."
+    }
+
+];
+
 
 // ======================================================
 // STATE
@@ -84,6 +112,10 @@ let inactivityTimer = null;
 let currentAudio = null;
 
 let currentAudioResolve = null;
+
+let escalationInterval = null;
+
+let escalationIndex = 0;
 
 let audioQueue = [];
 
@@ -247,6 +279,27 @@ function setCharacterState(state) {
     );
 
     character.classList.add(state);
+
+
+    // The animation classes above only control movement —
+    // they never change the emoji itself. Do that here.
+
+    const stateEmoji = {
+        happy: "😊",
+        watching: "👀",
+        annoyed: "😒",
+        angry: "😠",
+        rage: "🤬",
+        celebrate: "🎉"
+    };
+
+
+    if (stateEmoji[state]) {
+
+        character.textContent =
+            stateEmoji[state];
+
+    }
 
 }
 
@@ -650,6 +703,26 @@ async function playChargingQueue() {
 
 
 // ======================================================
+// APPLY ESCALATION STEP
+// ======================================================
+
+function applyEscalationStep() {
+
+    const step = escalationSteps[escalationIndex];
+
+
+    setCharacterState(step.state);
+
+
+    speechBubble.textContent = step.bubble;
+
+
+    characterStatus.textContent = step.status;
+
+}
+
+
+// ======================================================
 // USER ACTIVE
 // ======================================================
 
@@ -665,6 +738,9 @@ function userBecameActive() {
     }
 
 
+    const justBecameActive = !userIsActive;
+
+
     userIsActive = true;
 
 
@@ -673,9 +749,35 @@ function userBecameActive() {
     );
 
 
-    // UI
+    if (justBecameActive) {
 
-    setCharacterState("annoyed");
+        // Fresh "caught using phone" moment — restart the loop
+        // from the first (mildest) anger step.
+
+        clearInterval(escalationInterval);
+
+
+        escalationIndex = 0;
+
+
+        applyEscalationStep();
+
+
+        escalationInterval = setInterval(() => {
+
+            if (!userIsActive) {
+                return;
+            }
+
+            escalationIndex =
+                (escalationIndex + 1) %
+                escalationSteps.length;
+
+            applyEscalationStep();
+
+        }, ESCALATION_STEP_TIME);
+
+    }
 
 
     angerEffects.classList.add(
@@ -683,12 +785,7 @@ function userBecameActive() {
     );
 
 
-    speechBubble.textContent =
-        "HEY! I SAW THAT! 😾";
-
-
-    characterStatus.textContent =
-        "Why are you using your phone?!";
+    // UI
 
 
     usageStatus.textContent =
@@ -733,6 +830,9 @@ function userBecameInactive() {
 
 
             userIsActive = false;
+
+
+            clearInterval(escalationInterval);
 
 
             stopCurrentAudio();
