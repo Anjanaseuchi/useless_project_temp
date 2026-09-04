@@ -1,417 +1,241 @@
-// ===============================
-// CHARGER GUILT - FULL SCRIPT
-// ===============================
+// ======================================================
+// CHARGER GUILT
+// FULL SCRIPT - MATCHES CURRENT index.html
+// FIXED: audio filenames corrected to match actual files
+//   - "10-20 low charge (gogo).mp3" -> "10-20  low charge.(gogo)mp3"
+//   - "few minutes(70-100).mp3" -> "few  iminutes(70-100).mp3"
+//   - Assumes you renamed these 3 broken files to add the missing dot:
+//       dialog what the hell (7)mp3  -> dialog what the hell (7).mp3
+//       kanchana(8)mp3               -> kanchana(8).mp3
+//       sad-meow(2)-mp3              -> sad-meow(2)-.mp3
+//     (they showed a generic file icon in VS Code, not an audio icon,
+//     meaning the browser can't recognize them as mp3s as-is)
+//   - "scream(50%).mp3" was not visible in your audio folder screenshot.
+//     Verify it exists, or update/remove that entry.
+// ======================================================
 
-// ---------- HTML ELEMENTS ----------
-const plugButton = document.getElementById("plugButton");
-const fullButton = document.getElementById("fullButton");
 
-const batteryText = document.getElementById("batteryText");
+// ======================================================
+// HTML ELEMENTS
+// ======================================================
+
+const chargingStatus = document.getElementById("chargingStatus");
+
+const batteryPercent = document.getElementById("batteryPercent");
 const batteryFill = document.getElementById("batteryFill");
+const batteryMessage = document.getElementById("batteryMessage");
+
 const character = document.getElementById("character");
-const statusText = document.getElementById("statusText");
+const angerEffects = document.getElementById("angerEffects");
+const speechBubble = document.getElementById("speechBubble");
+const characterStatus = document.getElementById("characterStatus");
+
+const chargingAction = document.getElementById("chargingAction");
+const plugButton = document.getElementById("plugButton");
+
+const fullyChargedAction =
+    document.getElementById("fullyChargedAction");
+
+const fullyChargedButton =
+    document.getElementById("fullyChargedButton");
+
+const sessionText =
+    document.getElementById("sessionText");
+
+const usageStatus =
+    document.getElementById("usageStatus");
+
+const usageFill =
+    document.getElementById("usageFill");
+
+const usageMessage =
+    document.getElementById("usageMessage");
+
+const audioStatus =
+    document.getElementById("audioStatus");
+
+const audioName =
+    document.getElementById("audioName");
 
 
-// ---------- SETTINGS ----------
+// ======================================================
+// SETTINGS
+// ======================================================
+
 const AUDIO_FOLDER = "audio/";
-const INACTIVITY_TIME = 5000; // 5 seconds
+
+const INACTIVITY_TIME = 5000;
+
+const AUDIO_GAP = 1000;
+
+
+// ======================================================
+// STATE
+// ======================================================
+
+let batteryLevel = 50;
+
+let chargingStarted = false;
+
+let userIsActive = false;
+
+let inactivityTimer = null;
+
+let currentAudio = null;
+
+let currentAudioResolve = null;
+
+let audioQueue = [];
+
+let queueIndex = 0;
+
+let queueRunning = false;
 
 
 // ======================================================
 // AUDIO FILES
 // ======================================================
 
-// Battery-specific audio
+
+// ---------- BATTERY RANGE AUDIO ----------
+
 const batteryRangeAudio = [
+
     {
         min: 10,
         max: 20,
+
         files: [
-            "10-20 low charge (gogo).mp3",
+            "10-20  low charge.(gogo).mp3",
             "10-20(low dialog).mp3",
             "10-20(scream dialog).mp3"
         ]
     },
 
+
     {
         min: 20,
         max: 30,
+
         files: [
             "20-30(yooo).mp3",
             "fahh(20-30).mp3"
         ]
     },
 
+
     {
         min: 40,
         max: 60,
+
         files: [
             "40-60.mp3"
         ]
     },
 
+
     {
         min: 70,
         max: 100,
+
         files: [
-            "few minutes(70-100).mp3"
+            "few  iminutes(70-100).mp3"
         ]
     }
+
 ];
 
 
-// Exact battery percentage audio
+// ---------- EXACT BATTERY AUDIO ----------
+
 const exactBatteryAudio = {
-    50: [
-        "scream(50%).mp3"
-    ]
+
+    // "scream(50%).mp3" removed — file does not exist in your audio folder.
+    // Add an entry here if/when you create a real file for it, e.g.:
+    // 50: ["your-real-filename.mp3"]
+
 };
 
 
-// Numbered common audio
-// MUST play in this exact order
+// ---------- COMMON NUMBERED AUDIO ----------
+
 const numberedCommonAudio = [
+
     "eheh(1st).mp3",
+
     "sad-meow(2)-.mp3",
+
     "yaya(3rd).mp3",
+
     "(4)chachaa.mp3",
+
     "emotional-damage-meme(5).mp3",
+
     "hey-prabhu-hey-hari-ram(6).mp3",
+
     "dialog what the hell (7).mp3",
+
     "kanchana(8).mp3"
+
 ];
 
 
-// Remaining common audio
-// Plays after 1 -> 8
+// ---------- REMAINING COMMON AUDIO ----------
+
 const remainingCommonAudio = [
+
     "scolding.mp3",
+
     "scream 2.mp3",
+
     "scream1.mp3",
+
     "scream3.mp3",
+
     "spiderman-meme-song.mp3",
+
     "ultimate warning.mp3"
+
 ];
 
 
-// 100% audio
-// These are ONLY for full battery
+// ---------- 100% ONLY AUDIO ----------
+
 const fullBatteryAudio = [
+
     "100%.mp3",
+
     "100% 2nd audio.mp3"
+
 ];
 
 
-// Audio when Fully Charged button is clicked
-const fullyChargedButtonAudio = [
+// ---------- FULLY CHARGED BUTTON AUDIO ----------
+
+const fullyChargedAudio = [
+
     "(fully charged).mp3"
+
 ];
 
 
 // ======================================================
-// VARIABLES
+// HELPER
 // ======================================================
 
-let batteryLevel = 0;
+function audioURL(filename) {
 
-let chargingStarted = false;
-let userIsActive = false;
+    return AUDIO_FOLDER +
+        encodeURIComponent(filename);
 
-let inactivityTimer = null;
-
-let audioQueue = [];
-let queueIndex = 0;
-
-let currentAudio = null;
-
-let queueRunning = false;
-
-let batteryInitialized = false;
-
-
-// ======================================================
-// AUDIO URL
-// ======================================================
-
-function getAudioURL(filename) {
-    return AUDIO_FOLDER + encodeURIComponent(filename);
 }
 
 
 // ======================================================
-// STOP CURRENT AUDIO
+// CHARACTER STATE
 // ======================================================
 
-function stopCurrentAudio() {
-
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio = null;
-    }
-}
-
-
-// ======================================================
-// PLAY SINGLE AUDIO
-// ======================================================
-
-function playSingleAudio(filename) {
-
-    return new Promise((resolve) => {
-
-        stopCurrentAudio();
-
-        const audio = new Audio(getAudioURL(filename));
-
-        currentAudio = audio;
-
-        audio.volume = 1.0;
-
-        audio.onended = () => {
-            if (currentAudio === audio) {
-                currentAudio = null;
-            }
-
-            resolve(true);
-        };
-
-        audio.onerror = () => {
-
-            console.warn(
-                "❌ Audio failed:",
-                filename,
-                "\nURL:",
-                getAudioURL(filename)
-            );
-
-            if (currentAudio === audio) {
-                currentAudio = null;
-            }
-
-            resolve(false);
-        };
-
-        const playPromise = audio.play();
-
-        if (playPromise !== undefined) {
-
-            playPromise.catch((error) => {
-
-                console.warn(
-                    "⚠️ Audio could not play:",
-                    filename,
-                    error
-                );
-
-                if (currentAudio === audio) {
-                    currentAudio = null;
-                }
-
-                resolve(false);
-            });
-        }
-    });
-}
-
-
-// ======================================================
-// SMALL GAP BETWEEN AUDIOS
-// ======================================================
-
-function wait(ms) {
-
-    return new Promise(resolve => {
-        setTimeout(resolve, ms);
-    });
-}
-
-
-// ======================================================
-// GET EXACT BATTERY AUDIO
-// ======================================================
-
-function getExactBatteryAudio(percent) {
-
-    if (exactBatteryAudio[percent]) {
-        return [...exactBatteryAudio[percent]];
-    }
-
-    return [];
-}
-
-
-// ======================================================
-// GET RANGE BATTERY AUDIO
-// ======================================================
-
-function getRangeBatteryAudio(percent) {
-
-    const result = [];
-
-    for (const range of batteryRangeAudio) {
-
-        if (
-            percent >= range.min &&
-            percent < range.max
-        ) {
-
-            result.push(...range.files);
-        }
-    }
-
-    return result;
-}
-
-
-// ======================================================
-// BUILD AUDIO QUEUE
-// ======================================================
-
-function buildAudioQueue(percent) {
-
-    const queue = [];
-
-    // --------------------------------
-    // 1. EXACT BATTERY AUDIO FIRST
-    // --------------------------------
-
-    const exactAudio = getExactBatteryAudio(percent);
-
-    queue.push(...exactAudio);
-
-
-    // --------------------------------
-    // 2. BATTERY RANGE AUDIO
-    // --------------------------------
-
-    const rangeAudio = getRangeBatteryAudio(percent);
-
-    queue.push(...rangeAudio);
-
-
-    // --------------------------------
-    // 3. NUMBERED COMMON AUDIO
-    // --------------------------------
-
-    queue.push(...numberedCommonAudio);
-
-
-    // --------------------------------
-    // 4. REMAINING COMMON AUDIO
-    // --------------------------------
-
-    queue.push(...remainingCommonAudio);
-
-
-    return queue;
-}
-
-
-// ======================================================
-// START CHARGING AUDIO QUEUE
-// ======================================================
-
-async function playChargingQueue() {
-
-    if (!chargingStarted) {
-        return;
-    }
-
-    if (!userIsActive) {
-        return;
-    }
-
-    if (batteryLevel >= 100) {
-        return;
-    }
-
-    if (queueRunning) {
-        return;
-    }
-
-    queueRunning = true;
-
-
-    // Build queue if empty
-    if (audioQueue.length === 0) {
-
-        audioQueue = buildAudioQueue(batteryLevel);
-
-        queueIndex = 0;
-    }
-
-
-    while (
-        chargingStarted &&
-        userIsActive &&
-        batteryLevel < 100
-    ) {
-
-        if (queueIndex >= audioQueue.length) {
-
-            // Start again from beginning
-            // after all audio has played
-            queueIndex = 0;
-        }
-
-
-        const filename = audioQueue[queueIndex];
-
-        console.log(
-            "🔊 Playing:",
-            filename
-        );
-
-
-        await playSingleAudio(filename);
-
-
-        // Move to next audio
-        queueIndex++;
-
-
-        // If user stopped using phone,
-        // stop immediately
-        if (!chargingStarted || !userIsActive) {
-            break;
-        }
-
-        if (batteryLevel >= 100) {
-            break;
-        }
-
-
-        // About 1 second gap
-        await wait(1000);
-    }
-
-
-    queueRunning = false;
-
-    stopCurrentAudio();
-}
-
-
-// ======================================================
-// USER BECAME ACTIVE
-// ======================================================
-
-function userBecameActive() {
-
-    if (!chargingStarted) {
-        return;
-    }
-
-    if (batteryLevel >= 100) {
-        return;
-    }
-
-
-    userIsActive = true;
-
-    clearTimeout(inactivityTimer);
-
+function setCharacterState(state) {
 
     character.classList.remove(
         "happy",
@@ -422,61 +246,548 @@ function userBecameActive() {
         "celebrate"
     );
 
-    character.classList.add("annoyed");
+    character.classList.add(state);
 
-
-    statusText.textContent =
-        "HEY! I SAW THAT! 😾";
-
-
-    console.log("📱 User active");
-
-
-    playChargingQueue();
 }
 
 
 // ======================================================
-// USER BECAME INACTIVE
+// STOP AUDIO
 // ======================================================
 
-function userBecameInactive() {
+function stopCurrentAudio() {
 
-    clearTimeout(inactivityTimer);
+    if (currentAudio) {
+
+        currentAudio.pause();
+
+        currentAudio.currentTime = 0;
+
+        currentAudio = null;
+    }
 
 
-    inactivityTimer = setTimeout(() => {
+    audioStatus.textContent = "Silent";
 
-        userIsActive = false;
+    audioName.textContent = "No voice playing";
 
+
+    // IMPORTANT: if we're interrupting a playAudio() call that's
+    // still awaiting onended/onerror, resolve it now so the
+    // caller (the while loop in playChargingQueue) doesn't hang
+    // forever. Without this, forced stops (inactivity timeout,
+    // tab hidden, etc.) freeze the queue permanently.
+
+    if (currentAudioResolve) {
+
+        const resolve = currentAudioResolve;
+
+        currentAudioResolve = null;
+
+        resolve(false);
+
+    }
+
+}
+
+
+// ======================================================
+// WAIT
+// ======================================================
+
+function wait(ms) {
+
+    return new Promise(resolve => {
+
+        setTimeout(resolve, ms);
+
+    });
+
+}
+
+
+// ======================================================
+// PLAY ONE AUDIO
+// ======================================================
+
+function playAudio(filename) {
+
+    return new Promise(resolve => {
 
         stopCurrentAudio();
 
 
-        character.classList.remove(
-            "happy",
-            "watching",
-            "annoyed",
-            "angry",
-            "rage",
-            "celebrate"
-        );
-
-        character.classList.add("watching");
+        const audio =
+            new Audio(audioURL(filename));
 
 
-        statusText.textContent =
-            "Good... put the phone down. 😼";
+        currentAudio = audio;
+
+        currentAudioResolve = resolve;
 
 
-        console.log("😴 User inactive");
+        audio.volume = 1.0;
 
-    }, INACTIVITY_TIME);
+
+        audioStatus.textContent =
+            "Speaking 😾";
+
+
+        audioName.textContent =
+            filename;
+
+
+        audio.onended = () => {
+
+            if (currentAudio === audio) {
+
+                currentAudio = null;
+            }
+
+
+            if (currentAudioResolve === resolve) {
+
+                currentAudioResolve = null;
+            }
+
+
+            audioStatus.textContent =
+                "Silent";
+
+
+            audioName.textContent =
+                "No voice playing";
+
+
+            resolve(true);
+
+        };
+
+
+        audio.onerror = () => {
+
+            console.error(
+                "❌ AUDIO FAILED:",
+                filename
+            );
+
+
+            console.error(
+                "URL:",
+                audioURL(filename)
+            );
+
+
+            if (currentAudio === audio) {
+
+                currentAudio = null;
+            }
+
+
+            if (currentAudioResolve === resolve) {
+
+                currentAudioResolve = null;
+            }
+
+
+            audioStatus.textContent =
+                "Audio error";
+
+
+            audioName.textContent =
+                filename;
+
+
+            resolve(false);
+
+        };
+
+
+        const promise = audio.play();
+
+
+        if (promise !== undefined) {
+
+            promise.catch(error => {
+
+                console.warn(
+                    "⚠️ Cannot play:",
+                    filename,
+                    error
+                );
+
+
+                if (currentAudio === audio) {
+
+                    currentAudio = null;
+                }
+
+
+                if (currentAudioResolve === resolve) {
+
+                    currentAudioResolve = null;
+                }
+
+
+                resolve(false);
+
+            });
+
+        }
+
+    });
+
 }
 
 
 // ======================================================
-// ACTIVITY EVENT
+// GET EXACT BATTERY AUDIO
+// ======================================================
+
+function getExactBatteryAudio(percent) {
+
+    if (
+        Object.prototype.hasOwnProperty.call(
+            exactBatteryAudio,
+            percent
+        )
+    ) {
+
+        return [
+            ...exactBatteryAudio[percent]
+        ];
+
+    }
+
+
+    return [];
+
+}
+
+
+// ======================================================
+// GET RANGE AUDIO
+// ======================================================
+
+function getRangeBatteryAudio(percent) {
+
+    const result = [];
+
+
+    for (
+        const range
+        of batteryRangeAudio
+    ) {
+
+        if (
+            percent >= range.min &&
+            percent < range.max
+        ) {
+
+            result.push(
+                ...range.files
+            );
+
+        }
+
+    }
+
+
+    return result;
+
+}
+
+
+// ======================================================
+// BUILD QUEUE
+// ======================================================
+
+function buildAudioQueue(percent) {
+
+    const queue = [];
+
+
+    // --------------------------------------
+    // 1. EXACT BATTERY AUDIO
+    // --------------------------------------
+
+    queue.push(
+        ...getExactBatteryAudio(percent)
+    );
+
+
+    // --------------------------------------
+    // 2. RANGE BATTERY AUDIO
+    // --------------------------------------
+
+    queue.push(
+        ...getRangeBatteryAudio(percent)
+    );
+
+
+    // --------------------------------------
+    // 3. NUMBERED COMMON AUDIO
+    // --------------------------------------
+
+    queue.push(
+        ...numberedCommonAudio
+    );
+
+
+    // --------------------------------------
+    // 4. REMAINING COMMON AUDIO
+    // --------------------------------------
+
+    queue.push(
+        ...remainingCommonAudio
+    );
+
+
+    return queue;
+
+}
+
+
+// ======================================================
+// START AUDIO QUEUE
+// ======================================================
+
+async function playChargingQueue() {
+
+    if (!chargingStarted) {
+        return;
+    }
+
+
+    if (!userIsActive) {
+        return;
+    }
+
+
+    if (batteryLevel >= 100) {
+        return;
+    }
+
+
+    if (queueRunning) {
+        return;
+    }
+
+
+    queueRunning = true;
+
+
+    while (
+        chargingStarted &&
+        userIsActive &&
+        batteryLevel < 100
+    ) {
+
+
+        if (
+            audioQueue.length === 0
+        ) {
+
+            audioQueue =
+                buildAudioQueue(
+                    batteryLevel
+                );
+
+            queueIndex = 0;
+
+        }
+
+
+        if (
+            queueIndex >=
+            audioQueue.length
+        ) {
+
+            // Restart from beginning
+            queueIndex = 0;
+
+        }
+
+
+        const filename =
+            audioQueue[queueIndex];
+
+
+        console.log(
+            "🔊 PLAYING:",
+            filename
+        );
+
+
+        await playAudio(filename);
+
+
+        queueIndex++;
+
+
+        if (
+            !chargingStarted ||
+            !userIsActive ||
+            batteryLevel >= 100
+        ) {
+
+            break;
+
+        }
+
+
+        await wait(AUDIO_GAP);
+
+    }
+
+
+    queueRunning = false;
+
+
+    stopCurrentAudio();
+
+}
+
+
+// ======================================================
+// USER ACTIVE
+// ======================================================
+
+function userBecameActive() {
+
+    if (!chargingStarted) {
+        return;
+    }
+
+
+    if (batteryLevel >= 100) {
+        return;
+    }
+
+
+    userIsActive = true;
+
+
+    clearTimeout(
+        inactivityTimer
+    );
+
+
+    // UI
+
+    setCharacterState("annoyed");
+
+
+    angerEffects.classList.add(
+        "show"
+    );
+
+
+    speechBubble.textContent =
+        "HEY! I SAW THAT! 😾";
+
+
+    characterStatus.textContent =
+        "Why are you using your phone?!";
+
+
+    usageStatus.textContent =
+        "Using phone 📱";
+
+
+    usageFill.style.width =
+        "100%";
+
+
+    usageMessage.textContent =
+        "PUT IT DOWN! 😾";
+
+
+    audioStatus.textContent =
+        "Watching you 👀";
+
+
+    console.log(
+        "📱 USER ACTIVE"
+    );
+
+
+    playChargingQueue();
+
+}
+
+
+// ======================================================
+// USER INACTIVE
+// ======================================================
+
+function userBecameInactive() {
+
+    clearTimeout(
+        inactivityTimer
+    );
+
+
+    inactivityTimer =
+        setTimeout(() => {
+
+
+            userIsActive = false;
+
+
+            stopCurrentAudio();
+
+
+            setCharacterState(
+                "watching"
+            );
+
+
+            angerEffects.classList.remove(
+                "show"
+            );
+
+
+            speechBubble.textContent =
+                "Hehe... charging peacefully 😺";
+
+
+            characterStatus.textContent =
+                "Your phone is resting.";
+
+
+            usageStatus.textContent =
+                "Not using";
+
+
+            usageFill.style.width =
+                "0%";
+
+
+            usageMessage.textContent =
+                "Put the phone down and let it charge.";
+
+
+            audioStatus.textContent =
+                "Silent";
+
+
+            audioName.textContent =
+                "No voice playing";
+
+
+            console.log(
+                "😴 USER INACTIVE"
+            );
+
+
+        }, INACTIVITY_TIME);
+
+}
+
+
+// ======================================================
+// ACTIVITY DETECTED
 // ======================================================
 
 function activityDetected() {
@@ -484,6 +795,7 @@ function activityDetected() {
     if (!chargingStarted) {
         return;
     }
+
 
     if (batteryLevel >= 100) {
         return;
@@ -493,11 +805,12 @@ function activityDetected() {
     userBecameActive();
 
     userBecameInactive();
+
 }
 
 
 // ======================================================
-// TOUCH
+// TOUCH EVENTS
 // ======================================================
 
 document.addEventListener(
@@ -506,11 +819,13 @@ document.addEventListener(
     { passive: true }
 );
 
+
 document.addEventListener(
     "touchmove",
     activityDetected,
     { passive: true }
 );
+
 
 document.addEventListener(
     "touchend",
@@ -520,7 +835,7 @@ document.addEventListener(
 
 
 // ======================================================
-// MOUSE
+// MOUSE EVENTS
 // ======================================================
 
 document.addEventListener(
@@ -528,6 +843,7 @@ document.addEventListener(
     activityDetected,
     { passive: true }
 );
+
 
 document.addEventListener(
     "mousemove",
@@ -558,14 +874,17 @@ document.addEventListener(
 
 
 // ======================================================
-// SCREEN VISIBILITY
+// VISIBILITY
 // ======================================================
 
 document.addEventListener(
     "visibilitychange",
     () => {
 
-        if (document.visibilityState === "visible") {
+        if (
+            document.visibilityState ===
+            "visible"
+        ) {
 
             if (
                 chargingStarted &&
@@ -573,6 +892,7 @@ document.addEventListener(
             ) {
 
                 activityDetected();
+
             }
 
         } else {
@@ -580,69 +900,16 @@ document.addEventListener(
             userIsActive = false;
 
             stopCurrentAudio();
+
         }
+
     }
 );
 
 
 // ======================================================
-// DEVICE MOTION
+// MOTION DETECTION
 // ======================================================
-
-function setupMotionDetection() {
-
-    if (
-        typeof DeviceMotionEvent !== "undefined" &&
-        typeof DeviceMotionEvent.requestPermission === "function"
-    ) {
-
-        // iPhone / iPad
-        document.addEventListener(
-            "click",
-            requestMotionPermission,
-            { once: true }
-        );
-
-    } else {
-
-        window.addEventListener(
-            "devicemotion",
-            handleMotion,
-            { passive: true }
-        );
-    }
-}
-
-
-async function requestMotionPermission() {
-
-    try {
-
-        const permission =
-            await DeviceMotionEvent.requestPermission();
-
-        if (permission === "granted") {
-
-            window.addEventListener(
-                "devicemotion",
-                handleMotion,
-                { passive: true }
-            );
-
-            console.log(
-                "✅ Motion permission granted"
-            );
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Motion permission failed:",
-            error
-        );
-    }
-}
-
 
 function handleMotion(event) {
 
@@ -650,21 +917,31 @@ function handleMotion(event) {
         return;
     }
 
+
     if (batteryLevel >= 100) {
         return;
     }
 
 
-    const acc = event.accelerationIncludingGravity;
+    const acceleration =
+        event.accelerationIncludingGravity;
 
-    if (!acc) {
+
+    if (!acceleration) {
         return;
     }
 
 
-    const x = acc.x || 0;
-    const y = acc.y || 0;
-    const z = acc.z || 0;
+    const x =
+        acceleration.x || 0;
+
+
+    const y =
+        acceleration.y || 0;
+
+
+    const z =
+        acceleration.z || 0;
 
 
     const movement =
@@ -675,11 +952,100 @@ function handleMotion(event) {
         );
 
 
-    // Detect phone movement
     if (movement > 12) {
 
         activityDetected();
+
     }
+
+}
+
+
+// ======================================================
+// MOTION SETUP
+// ======================================================
+
+async function setupMotionDetection() {
+
+    if (
+        typeof DeviceMotionEvent !==
+        "undefined"
+    ) {
+
+
+        if (
+            typeof DeviceMotionEvent.requestPermission ===
+            "function"
+        ) {
+
+
+            document.addEventListener(
+                "click",
+                async () => {
+
+                    try {
+
+                        const permission =
+                            await DeviceMotionEvent
+                                .requestPermission();
+
+
+                        if (
+                            permission ===
+                            "granted"
+                        ) {
+
+                            window.addEventListener(
+                                "devicemotion",
+                                handleMotion,
+                                {
+                                    passive: true
+                                }
+                            );
+
+
+                            console.log(
+                                "✅ Motion enabled"
+                            );
+
+                        }
+
+                    } catch (error) {
+
+                        console.warn(
+                            "Motion permission failed:",
+                            error
+                        );
+
+                    }
+
+                },
+                {
+                    once: true
+                }
+            );
+
+
+        } else {
+
+
+            window.addEventListener(
+                "devicemotion",
+                handleMotion,
+                {
+                    passive: true
+                }
+            );
+
+
+            console.log(
+                "✅ Motion listener enabled"
+            );
+
+        }
+
+    }
+
 }
 
 
@@ -689,10 +1055,17 @@ function handleMotion(event) {
 
 function updateBatteryUI(level) {
 
-    batteryLevel = Math.round(level);
+    batteryLevel =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                Math.round(level)
+            )
+        );
 
 
-    batteryText.textContent =
+    batteryPercent.textContent =
         batteryLevel + "%";
 
 
@@ -700,16 +1073,17 @@ function updateBatteryUI(level) {
         batteryLevel + "%";
 
 
-    // --------------------------------
-    // FULL BATTERY
-    // --------------------------------
+    // --------------------------------------
+    // 100%
+    // --------------------------------------
 
     if (batteryLevel >= 100) {
+
 
         batteryLevel = 100;
 
 
-        batteryText.textContent =
+        batteryPercent.textContent =
             "100%";
 
 
@@ -717,74 +1091,119 @@ function updateBatteryUI(level) {
             "100%";
 
 
-        plugButton.style.display =
-            "none";
-
-        fullButton.style.display =
-            "inline-block";
-
-
-        statusText.textContent =
-            "FULLY CHARGED! 🎉";
-
-
-        character.classList.remove(
-            "happy",
-            "watching",
-            "annoyed",
-            "angry",
-            "rage"
-        );
-
-        character.classList.add(
-            "celebrate"
-        );
-
-
         chargingStarted = false;
+
         userIsActive = false;
 
 
-        clearTimeout(inactivityTimer);
+        clearTimeout(
+            inactivityTimer
+        );
+
 
         stopCurrentAudio();
 
 
         audioQueue = [];
+
         queueIndex = 0;
+
         queueRunning = false;
 
 
-        return;
-    }
+        chargingAction.classList.add(
+            "hidden"
+        );
 
 
-    // --------------------------------
-    // NOT FULL
-    // --------------------------------
-
-    plugButton.style.display =
-        "inline-block";
-
-    fullButton.style.display =
-        "none";
+        fullyChargedAction.classList.remove(
+            "hidden"
+        );
 
 
-    if (chargingStarted) {
+        chargingStatus.textContent =
+            "Fully Charged 🎉";
 
-        character.classList.remove(
-            "happy",
-            "watching",
-            "annoyed",
-            "angry",
-            "rage",
+
+        batteryMessage.textContent =
+            "Your battery is full!";
+
+
+        setCharacterState(
             "celebrate"
         );
 
-        character.classList.add(
+
+        angerEffects.classList.remove(
+            "show"
+        );
+
+
+        speechBubble.textContent =
+            "YAY! FULLY CHARGED! 🎉";
+
+
+        characterStatus.textContent =
+            "Battery is at 100%.";
+
+
+        usageStatus.textContent =
+            "Not using";
+
+
+        usageFill.style.width =
+            "0%";
+
+
+        usageMessage.textContent =
+            "Charging complete.";
+
+
+        return;
+
+    }
+
+
+    // --------------------------------------
+    // BELOW 100%
+    // --------------------------------------
+
+    chargingAction.classList.remove(
+        "hidden"
+    );
+
+
+    fullyChargedAction.classList.add(
+        "hidden"
+    );
+
+
+    chargingStatus.textContent =
+        "Ready to charge 🔌";
+
+
+    batteryMessage.textContent =
+        "Your phone needs some charging.";
+
+
+    if (!chargingStarted) {
+
+
+        setCharacterState(
             "happy"
         );
+
+
+        speechBubble.textContent =
+            "Hehe... charging peacefully 😺";
+
+
+        characterStatus.textContent =
+            "Your phone is resting.";
+
     }
+
+
 }
 
 
@@ -794,165 +1213,265 @@ function updateBatteryUI(level) {
 
 async function setupBattery() {
 
-    if (!("getBattery" in navigator)) {
 
-        batteryText.textContent =
-            "Battery API unavailable";
+    // --------------------------------------
+    // REAL BATTERY API
+    // --------------------------------------
 
-        statusText.textContent =
-            "Battery detection isn't supported here.";
-
-        console.warn(
-            "⚠️ Battery API unavailable"
-        );
-
-        return;
-    }
+    if (
+        "getBattery" in navigator
+    ) {
 
 
-    try {
-
-        const battery =
-            await navigator.getBattery();
+        try {
 
 
-        function updateBattery() {
-
-            const level =
-                battery.level * 100;
+            const battery =
+                await navigator.getBattery();
 
 
-            updateBatteryUI(level);
+            function updateRealBattery() {
 
 
-            console.log(
-                "🔋 Battery:",
-                Math.round(level) + "%"
-            );
-        }
+                const level =
+                    Math.round(
+                        battery.level * 100
+                    );
 
 
-        // Initial battery
-        updateBattery();
+                updateBatteryUI(level);
 
 
-        // Battery percentage changed
-        battery.addEventListener(
-            "levelchange",
-            updateBattery
-        );
+                chargingStatus.textContent =
+                    battery.charging
+                        ? "Charging ⚡"
+                        : "Not charging";
 
-
-        // Charging state changed
-        battery.addEventListener(
-            "chargingchange",
-            () => {
 
                 console.log(
-                    "⚡ Charging:",
+                    "🔋 REAL BATTERY:",
+                    level + "%",
+                    "Charging:",
                     battery.charging
                 );
 
+            }
 
-                if (battery.charging) {
 
-                    if (battery.level * 100 < 100) {
+            updateRealBattery();
 
-                        statusText.textContent =
-                            "Charging... 🔌";
+
+            battery.addEventListener(
+                "levelchange",
+                updateRealBattery
+            );
+
+
+            battery.addEventListener(
+                "chargingchange",
+                () => {
+
+
+                    console.log(
+                        "⚡ Charging changed:",
+                        battery.charging
+                    );
+
+
+                    if (
+                        battery.charging
+                    ) {
+
+
+                        if (
+                            battery.level *
+                            100 < 100
+                        ) {
+
+                            chargingStatus.textContent =
+                                "Charging ⚡";
+
+                        }
+
+
+                    } else {
+
+
+                        chargingStatus.textContent =
+                            "Not charging";
+
+
+                        chargingStarted =
+                            false;
+
+
+                        userIsActive =
+                            false;
+
+
+                        stopCurrentAudio();
+
+
+                        clearTimeout(
+                            inactivityTimer
+                        );
 
                     }
 
-                } else {
-
-                    statusText.textContent =
-                        "Not charging";
-
-                    chargingStarted = false;
-                    userIsActive = false;
-
-                    stopCurrentAudio();
-
-                    clearTimeout(
-                        inactivityTimer
-                    );
                 }
-            }
-        );
+            );
 
 
-    } catch (error) {
+            console.log(
+                "✅ Real Battery API working"
+            );
 
-        console.error(
-            "Battery API error:",
-            error
-        );
 
-        batteryText.textContent =
-            "Battery unavailable";
+            return;
 
-        statusText.textContent =
-            "Could not read battery.";
+
+        } catch (error) {
+
+
+            console.warn(
+                "⚠️ Battery API error:",
+                error
+            );
+
+        }
+
     }
+
+
+    // --------------------------------------
+    // TEST MODE
+    // --------------------------------------
+
+    console.warn(
+        "⚠️ Battery API unavailable."
+    );
+
+
+    batteryLevel = 50;
+
+
+    updateBatteryUI(50);
+
+
+    batteryPercent.textContent =
+        "50%";
+
+
+    batteryMessage.textContent =
+        "50% TEST MODE";
+
+
+    chargingStatus.textContent =
+        "Test Mode 🔋";
+
+
+    console.log(
+        "🧪 TEST BATTERY = 50%"
+    );
+
 }
 
 
 // ======================================================
-// JUST PLUGGED IN BUTTON
+// JUST PLUGGED IN
 // ======================================================
 
 plugButton.addEventListener(
     "click",
     () => {
 
-        // Don't play audio immediately
+
+        console.log(
+            "🔌 JUST PLUGGED IN"
+        );
+
+
         chargingStarted = true;
+
 
         userIsActive = false;
 
 
-        clearTimeout(inactivityTimer);
+        clearTimeout(
+            inactivityTimer
+        );
+
 
         stopCurrentAudio();
 
 
-        // Reset queue
+        // Build fresh queue
         audioQueue =
             buildAudioQueue(
                 batteryLevel
             );
 
+
         queueIndex = 0;
+
 
         queueRunning = false;
 
 
-        character.classList.remove(
-            "happy",
-            "annoyed",
-            "angry",
-            "rage",
-            "celebrate"
-        );
+        // UI
 
-        character.classList.add(
+        setCharacterState(
             "watching"
         );
 
 
-        statusText.textContent =
-            "I'm watching you... 👀";
-
-
-        console.log(
-            "🔌 Charging session started"
+        angerEffects.classList.remove(
+            "show"
         );
 
 
+        speechBubble.textContent =
+            "I'm watching you... 👀";
+
+
+        characterStatus.textContent =
+            "Don't touch your phone.";
+
+
+        usageStatus.textContent =
+            "Not using";
+
+
+        usageFill.style.width =
+            "0%";
+
+
+        usageMessage.textContent =
+            "Put the phone down and let it charge.";
+
+
+        chargingStatus.textContent =
+            "Charging ⚡";
+
+
+        sessionText.textContent =
+            "Session started. I'm watching... 👀";
+
+
+        audioStatus.textContent =
+            "Silent";
+
+
+        audioName.textContent =
+            "No voice playing";
+
+
         // IMPORTANT:
-        // No audio here.
-        // Audio starts only when activity
-        // is detected.
+        // NO AUDIO HERE.
+        //
+        // Audio starts only when
+        // activity is detected.
+
     }
 );
 
@@ -961,91 +1480,160 @@ plugButton.addEventListener(
 // FULLY CHARGED BUTTON
 // ======================================================
 
-fullButton.addEventListener(
+fullyChargedButton.addEventListener(
     "click",
     async () => {
 
-        // Stop anything else
+
+        console.log(
+            "🥳 FULLY CHARGED BUTTON"
+        );
+
+
         stopCurrentAudio();
 
 
         chargingStarted = false;
+
+
         userIsActive = false;
 
 
-        clearTimeout(inactivityTimer);
-
-
-        character.classList.remove(
-            "happy",
-            "watching",
-            "annoyed",
-            "angry",
-            "rage"
+        clearTimeout(
+            inactivityTimer
         );
 
-        character.classList.add(
+
+        setCharacterState(
             "celebrate"
         );
 
 
-        statusText.textContent =
-            "YAY! FULLY CHARGED! 🎉🔋";
+        angerEffects.classList.remove(
+            "show"
+        );
 
 
-        // Play only the full-charge sound
+        speechBubble.textContent =
+            "YAY! YOU MADE IT! 🎉🔋";
+
+
+        characterStatus.textContent =
+            "Your phone is fully charged!";
+
+
+        usageStatus.textContent =
+            "Not using";
+
+
+        usageFill.style.width =
+            "0%";
+
+
+        usageMessage.textContent =
+            "Charging complete!";
+
+
+        audioStatus.textContent =
+            "Celebrating 🎉";
+
+
+        // Play the dedicated full-charge sound
+
         for (
             const filename
-            of fullyChargedButtonAudio
+            of fullyChargedAudio
         ) {
 
-            await playSingleAudio(
+
+            await playAudio(
                 filename
             );
 
+
             await wait(500);
+
         }
+
     }
 );
 
 
 // ======================================================
-// INITIAL PAGE STATE
+// INITIAL PAGE
 // ======================================================
 
 function initializePage() {
 
-    plugButton.style.display =
-        "inline-block";
 
-    fullButton.style.display =
-        "none";
-
-
-    batteryText.textContent =
+    chargingStatus.textContent =
         "Checking...";
 
 
-    statusText.textContent =
-        "Waiting...";
+    batteryPercent.textContent =
+        "--%";
 
 
-    character.classList.remove(
-        "watching",
-        "annoyed",
-        "angry",
-        "rage",
-        "celebrate"
-    );
+    batteryFill.style.width =
+        "0%";
 
-    character.classList.add(
+
+    batteryMessage.textContent =
+        "Checking your battery...";
+
+
+    setCharacterState(
         "happy"
     );
+
+
+    angerEffects.classList.remove(
+        "show"
+    );
+
+
+    speechBubble.textContent =
+        "Hehe... charging peacefully 😺";
+
+
+    characterStatus.textContent =
+        "Your phone is resting.";
+
+
+    usageStatus.textContent =
+        "Not using";
+
+
+    usageFill.style.width =
+        "0%";
+
+
+    usageMessage.textContent =
+        "Put the phone down and let it charge.";
+
+
+    audioStatus.textContent =
+        "Silent";
+
+
+    audioName.textContent =
+        "No voice playing";
+
+
+    chargingAction.classList.remove(
+        "hidden"
+    );
+
+
+    fullyChargedAction.classList.add(
+        "hidden"
+    );
+
 }
 
 
 // ======================================================
-// START
+// START APP
 // ======================================================
 
 initializePage();
@@ -1056,99 +1644,91 @@ setupBattery();
 
 
 // ======================================================
-// DEBUG: CHECK ALL AUDIO FILES
+// AUDIO DIAGNOSTIC
+// Run checkAudioFiles() in the browser console to verify
+// every filename actually resolves before relying on it.
 // ======================================================
 
 async function checkAudioFiles() {
 
-    console.log(
-        "================================"
-    );
+
+    console.clear();
+
 
     console.log(
-        "🔍 CHECKING AUDIO FILES..."
+        "===================================="
     );
 
+
     console.log(
-        "================================"
+        "🔍 CHECKING ALL AUDIO FILES"
+    );
+
+
+    console.log(
+        "===================================="
     );
 
 
     const allFiles = new Set();
 
 
-    // Battery ranges
+    // Range audio
+
     for (
         const range
         of batteryRangeAudio
     ) {
 
-        for (
-            const file
-            of range.files
-        ) {
+        range.files.forEach(
+            file => allFiles.add(file)
+        );
 
-            allFiles.add(file);
-        }
     }
 
 
-    // Exact battery
-    for (
-        const files
-        of Object.values(
-            exactBatteryAudio
-        )
-    ) {
+    // Exact audio
 
-        for (
-            const file
-            of files
-        ) {
+    Object.values(
+        exactBatteryAudio
+    ).forEach(files => {
 
-            allFiles.add(file);
-        }
-    }
+        files.forEach(
+            file => allFiles.add(file)
+        );
+
+    });
 
 
-    // Numbered common
-    for (
-        const file
-        of numberedCommonAudio
-    ) {
+    // Common
 
-        allFiles.add(file);
-    }
+    numberedCommonAudio.forEach(
+        file => allFiles.add(file)
+    );
 
 
-    // Remaining common
-    for (
-        const file
-        of remainingCommonAudio
-    ) {
-
-        allFiles.add(file);
-    }
+    remainingCommonAudio.forEach(
+        file => allFiles.add(file)
+    );
 
 
     // 100%
-    for (
-        const file
-        of fullBatteryAudio
-    ) {
 
-        allFiles.add(file);
-    }
+    fullBatteryAudio.forEach(
+        file => allFiles.add(file)
+    );
 
 
     // Fully charged
-    for (
-        const file
-        of fullyChargedButtonAudio
-    ) {
 
-        allFiles.add(file);
-    }
+    fullyChargedAudio.forEach(
+        file => allFiles.add(file)
+    );
+
+
+    let working = 0;
+
+    let failed = 0;
 
 
     for (
@@ -1156,11 +1736,13 @@ async function checkAudioFiles() {
         of allFiles
     ) {
 
+
         await new Promise(resolve => {
+
 
             const audio =
                 new Audio(
-                    getAudioURL(filename)
+                    audioURL(filename)
                 );
 
 
@@ -1168,14 +1750,22 @@ async function checkAudioFiles() {
                 "canplaythrough",
                 () => {
 
+
                     console.log(
                         "✅ WORKING:",
                         filename
                     );
 
+
+                    working++;
+
+
                     resolve();
+
                 },
-                { once: true }
+                {
+                    once: true
+                }
             );
 
 
@@ -1183,44 +1773,57 @@ async function checkAudioFiles() {
                 "error",
                 () => {
 
+
                     console.error(
                         "❌ FAILED:",
                         filename
                     );
 
+
                     console.error(
                         "URL:",
-                        getAudioURL(filename)
+                        audioURL(filename)
                     );
 
+
+                    failed++;
+
+
                     resolve();
+
                 },
-                { once: true }
+                {
+                    once: true
+                }
             );
 
 
             audio.load();
+
         });
+
     }
 
 
     console.log(
-        "================================"
+        "===================================="
     );
 
-    console.log(
-        "🔍 AUDIO CHECK FINISHED"
-    );
 
     console.log(
-        "================================"
+        "✅ WORKING:",
+        working
     );
+
+
+    console.log(
+        "❌ FAILED:",
+        failed
+    );
+
+
+    console.log(
+        "===================================="
+    );
+
 }
-
-
-// To check all audio files manually:
-// Open browser Console and type:
-//
-// checkAudioFiles()
-//
-// Then press Enter.
